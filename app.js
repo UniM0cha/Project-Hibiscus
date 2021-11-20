@@ -1,6 +1,7 @@
+const port = 3000
+
 const express = require('express')
 const app = express()
-const port = 3000
 const path = require('path');
 const logger = require('morgan');
 const createError = require('http-errors');
@@ -15,10 +16,13 @@ app.use(logger('dev'));
 // 정적 위치 지정
 app.use(express.static(path.join(__dirname, 'public')));
 
+// body parser 설정
+app.use(express.json());
+
 // 라우팅 지정
 const indexRouter = require('./routes/index');
 app.use('/', indexRouter);
-app.use(function(req, res, next) {
+app.use((req, res, next) => {
   next(createError(404)); // 404
 });
 
@@ -26,5 +30,5 @@ const server = app.listen(port, () => {
   console.log(`Express Server Listening at ${port}`)
 })
 
-const webSocket = require('./socket');
+const webSocket = require('./config/socket');
 webSocket(server);
