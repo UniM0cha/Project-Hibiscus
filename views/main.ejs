@@ -1,0 +1,24 @@
+<%- include('templates/header', {title : "메인페이지"}) %>
+
+<body>
+  <button id="btnCreateRoom">방만들기</button>
+  <button id="btnEnterRoom">참여하기</button>
+
+  <script>
+    // 문서 로딩 후 실행
+    $(() => {
+
+      $('#btnCreateRoom').click(() => {
+        let user_id = prompt('사용하실 닉네임을 입력해주세요.');
+        location.href = `/room_create?user_id=${user_id}`;
+      })
+
+      $('#btnEnterRoom').click(() => {
+        let user_id = prompt('사용하실 닉네임을 입력해주세요.');
+        location.href = `/join?user_id=${user_id}`;
+      })
+    })
+  </script>
+</body>
+
+</html>

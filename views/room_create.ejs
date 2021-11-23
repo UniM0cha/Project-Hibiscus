@@ -1,0 +1,37 @@
+<%- include('templates/header', {title : "대기실" }) %>
+
+  <body>
+    <h1 id="welcome"></h1>
+    <h1>참가자를 대기중입니다...</h1>
+    <h2>방 번호 : <label id="roomID"></label></h2>
+    <h2>대기자 : <label id="joinedPlayer"></label> / <label id="maxPlayer"></label></h2>
+
+    <script>
+      const socket = io();
+      // 쿼리 스트링에서 유저 아이디 받아오기
+      let search = location.search
+      let params = new URLSearchParams(search);
+      let user_id = params.get('user_id');
+      console.log('User ID :', user_id);
+
+      let dataToSend = {
+        user_id: user_id
+      }
+      socket.emit('create_room', dataToSend);
+
+      // 문서 로딩 후 실행
+      $(() => {
+        $('#welcome').text(`${user_id}님 안녕하세요!`)
+
+        socket.on('room_info', (data) => {
+          $('#roomID').text(data.room_id);
+          $('#joinedPlayer').text(data.joinedPlayer);
+          $('#maxPlayer').text(data.maxPlayer);
+        });
+      });
+
+    </script>
+
+  </body>
+
+  </html>

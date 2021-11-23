@@ -25,6 +25,7 @@ module.exports = (_server) => {
 
     // 3) 클라이언트로부터 메시지 수신 이벤트 처리
     ws.on('message', (msg) => {
+
       console.log(`클라이언트[${ip}]에게 수신한 메시지 : ${msg}`);
       ws.send('메시지 잘 받았습니다! from 서버');
     });

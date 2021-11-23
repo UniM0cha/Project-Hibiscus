@@ -1,0 +1,22 @@
+<%- include('templates/header', {title : "대기실"}) %>
+
+<body>
+  <h1>참가자를 대기중입니다!</h1>
+  <h2>방 번호 : <label id="roomNumber"></label></h2>
+  <h2>대기자 : <label id="enteredParticipant"></label> / <label id="maxParticipant"></label></h2>
+
+  <script>
+    const socket = io();
+    
+    socket.emit('join_room');
+
+    socket.on('room_info', (data) => {
+      $('#roomNumber').text(data.roomNumber);
+      $('#enteredParticipant').text(data.enteredParticipant);
+      $('#maxParticipant').text(data.maxParticipant);
+    });
+  </script>
+
+</body>
+
+</html>

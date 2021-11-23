@@ -1,0 +1,59 @@
+<body>
+  <h3>채팅 클라이언트 05 : 그룹 채팅하기</h3>
+  <br>
+  <div>
+      <input type="text" id="hostInput" value="localhost" />
+      <input type="text" id="portInput" value="3000" />
+      <input type="button" id="connectButton" value="연결하기" />
+  </div>
+  <br>
+  <div>
+      <input type="text" id="idInput" value="test01" />
+      <input type="password" id="passwordInput" value="123456" />
+      <input type="text" id="aliasInput" value="소녀시대" />
+      <input type="text" id="todayInput" value="좋은 날!" />
+      <input type="button" id="loginButton" value="로그인" />
+      <input type="button" id="logoutButton" value="로그아웃" />
+  </div>
+  <br>
+  <div>
+      <input type="text" id="roomIdInput" value="meeting01" />
+      <input type="text" id="roomNameInput" value="청춘들의대화" />
+      <input type="button" id="createRoomButton" value="방만들기" />
+      <input type="button" id="updateRoomButton" value="방이름바꾸기" />
+      <input type="button" id="deleteRoomButton" value="방없애기" />
+  </div>
+  <br>
+  <div id="roomList">
+  </div>
+  <br>
+  <div>
+      <input type="button" id="joinRoomButton" value="방입장하기" />
+      <input type="button" id="leaveRoomButton" value="방나가기" />
+  </div>
+  <br>
+  <div>
+      <div>
+          <span>보내는사람 아이디 :</span> 
+          <input type="text" id="senderInput" value="test01" />
+      </div>
+      <div>
+          <span>받는사람 아이디 :</span>
+          <input type="text" id="recepientInput" value="ALL" />
+      </div>
+      <!-- command 선택 <select> 채팅, 그룹채팅 -->
+      <select name="chattype" id="chattype">
+          <option value="chat">채팅</option>
+          <option value="groupchat" selected>그룹채팅</option>
+      </select>
+      <div>
+          <span>메시지 데이터 :</span>
+          <input type="text" id="dataInput" value="안녕!"/>
+      </div>
+      <br>
+      <input type="button" id="sendButton" value="전송" />
+  </div>    
+  <hr/>
+  <p>결과 : </p>
+  <div id="result"></div>
+</body>

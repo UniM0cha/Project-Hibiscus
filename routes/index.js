@@ -1,37 +1,32 @@
 const express = require('express');
-const router = express.Router();
+const app = express.app();
 
 const db_config = require('../config/database');
 const conn = db_config.init();
 db_config.connect(conn);
 
-router.get('/', (req, res, next) => {
+app.get('/', (req, res) => {
   res.render('index', { title: 'Express' });
 });
 
-router.get('/gameTest', (req, res, next) => {
+app.get('/gameTest', (req, res) => {
   res.render('game_test');
 });
 
-router.get('/socketTest', (req, res, next) => {
+app.get('/socketTest', (req, res) => {
   res.render('socket_test');
 });
 
-router.get('/main', (req, res, next) => {
+app.get('/main', (req, res) => {
   res.render('main_page_test');
 });
 
+app.get('/waiting', (req, res) => {
+  res.render('waiting');
+})
 
-let roomNumbers = [];
-
-router.get('/waiting', (req, res, next) => {
-  roomNumbers.push(generateRandomCode(4))
-  roomNumbers.find
-
-
-
-
-  res.render('waiting')
+app.get('/enter', (req, res) => {
+  res.render('enter');
 })
 
 
@@ -40,15 +35,4 @@ router.get('/waiting', (req, res, next) => {
 
 
 
-
-
-function generateRandomCode() {
-  let str = ''
-  for (let i = 0; i < 4; i++) {
-    str += Math.floor(Math.random() * 10)
-  }
-  return str
-}
-
-
-module.exports = router;
+module.exports = app;

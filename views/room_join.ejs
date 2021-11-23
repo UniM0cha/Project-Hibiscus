@@ -1,0 +1,22 @@
+<%- include('templates/header', {title : "대기실" }) %>
+
+  <body>
+    <h1 id="welcome"></h1>
+
+    <script>
+      const socket = io();
+      let search = location.search
+      let params = new URLSearchParams(search);
+      let user_id = params.get('user_id');
+      let room_id = params.get('room_id');
+      console.log('User ID :', user_id);
+
+      // 문서 로딩 후 실행
+      $(() => {
+        $('#welcome').text(`${user_id}님 안녕하세요!`);
+        
+      });
+    </script>
+  </body>
+
+  </html>
