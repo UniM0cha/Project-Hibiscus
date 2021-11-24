@@ -2,19 +2,43 @@
 
   <body>
     <h1 id="welcome"></h1>
+    <h1>참가자를 대기중입니다...</h1>
+    <h2>방 번호 : <label id="roomID"></label></h2>
+    <h2>대기자 : <label id="joinedPlayer"></label> / <label id="maxPlayer"></label></h2>
+
+    
 
     <script>
-      const socket = io();
-      let search = location.search
-      let params = new URLSearchParams(search);
-      let user_id = params.get('user_id');
-      let room_id = params.get('room_id');
-      console.log('User ID :', user_id);
-
       // 문서 로딩 후 실행
       $(() => {
+        const socket = io();
+        let search = location.search
+        let params = new URLSearchParams(search);
+        let user_id = params.get('user_id');
+        let room_id = params.get('room_id');
+
+        console.log('User ID :', user_id);
+        console.log(`${room_id}번 방에 참여합니다.`);
+
+        let dataToSend = {
+          user_id: user_id,
+          room_id: room_id
+        };
+        socket.emit('join_room', dataToSend);
+
         $('#welcome').text(`${user_id}님 안녕하세요!`);
+        $('#roomID').text(room_id);
+
+        socket.on('join_success', (data) => {
+          let room_joiner_size = data.room_joiner_size;
+          let room_max_size = data.room_max_size;
+
+          $('#joinedPlayer').text(room_joiner_size);
+          $('#maxPlayer').text(room_max_size);
+        });
+
         
+
       });
     </script>
   </body>

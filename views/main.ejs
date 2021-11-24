@@ -10,12 +10,20 @@
 
       $('#btnCreateRoom').click(() => {
         let user_id = prompt('사용하실 닉네임을 입력해주세요.');
-        location.href = `/room_create?user_id=${user_id}`;
+        if(user_id === null){
+          alert('닉네임을 입력해주세요!');
+        } else {
+          location.href = `/room_create?user_id=${user_id}`;
+        }
       })
 
       $('#btnEnterRoom').click(() => {
         let user_id = prompt('사용하실 닉네임을 입력해주세요.');
-        location.href = `/join?user_id=${user_id}`;
+        if(user_id === null){
+          alert('닉네임을 입력해주세요!');
+        } else {
+          location.href = `/room_before_join?user_id=${user_id}`;
+        }
       })
     })
   </script>

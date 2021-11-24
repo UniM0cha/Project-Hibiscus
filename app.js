@@ -45,7 +45,7 @@ app.get('/room_join', (req, res) => {
 })
 ////////////////////////////////////////
 
-const maxPlayer = 10;
+const room_max_size = 3;
 let rooms = io.sockets.adapter.rooms;
 
 /////////////// 소켓 ///////////////////
@@ -64,20 +64,21 @@ io.on('connection', (socket) => {
   socket.on('create_room', (data) => {
     
     // 생성된 방 번호를 저장할 변수
-    let roomCode = generateRoomCode();
+    let room_id = generateRoomCode();
 
     // 해당 room code에 참가
-    socket.join(roomCode);
-    console.log(`${roomCode}번 방을 생성했습니다.`);
-    console.log('현재 만들어진 방', rooms);
+    socket.join(room_id);
+    console.log(`${room_id}번 방을 생성했습니다.`);
+    console.log('현재 만들어진 방: \n', rooms);
 
-    let joinedPlayer = rooms.get(roomCode).size;
+    // 현재 참가자 불러옴
+    let joinedPlayer = rooms.get(room_id).size;
 
     // 만들어진 방의 정보 전송
     socket.emit('room_info', {
-      room_id: roomCode,
+      room_id: room_id,
       joinedPlayer: joinedPlayer,
-      maxPlayer: maxPlayer,
+      maxPlayer: room_max_size,
     });
   });
 
@@ -87,13 +88,38 @@ io.on('connection', (socket) => {
     let room_id = data.room_id;
 
     if (!rooms.get(room_id)){
-      console.log('방 찾지 못함');
       socket.emit('no_room');
     } else {
-      console.log('방 찾음');
       socket.emit('is_room')
     }
   });
+
+    // 방에 참여
+    socket.on('join_room', (data) => {
+      let user_id = data.user_id;
+      let room_id = data.room_id;
+      let room_joiner_size = rooms.get(room_id).size;
+
+      // 방이 가득 찼으면, 게임 시작
+      if(room_joiner_size === room_max_size){
+        io.to(room_id).emit('game_start');
+      }
+      // 방이 가득 차지 않았다면, 대기자 더 모음
+      else {
+        socket.join(room_id);
+
+        room_joiner_size = rooms.get(room_id).size;
+        let room_max_size = room_max_size;
+  
+        let dataToSend = {
+          room_joiner_size : room_joiner_size,
+          room_max_size : room_max_size
+        }
+  
+        // 방에 참여한 모두에게 정보 전달
+        io.to(room_id).emit('join_success', dataToSend);
+      }
+    });
 });
 
 function generateRoomCode() {

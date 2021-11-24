@@ -39,7 +39,7 @@
 
       socket.on('is_room', () => {
         console.log('방 찾음');
-        location.href = `/room_join?room_id=${room_id}`;
+        location.href = `/room_join?room_id=${room_id}&user_id=${user_id}`;
       })
     </script>
   </body>
