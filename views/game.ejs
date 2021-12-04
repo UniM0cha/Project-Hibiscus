@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <%- include('templates/header', {title : "게임화면" }) %>
+  <!-- soket.io -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/game.js"></script>
+</head>
+
+<body>
+  <!-- 방만들기를 클릭할 때 -->
+  <% if(mode === 'create_room') { %>
+  
+  <div class="before_game">
+    <h1><label id="nickname"></label>님 환영합니다!</h1>
+    <h1>참가자를 대기중입니다...</h1>
+    <h2>방 번호 : <label id="room_id"></label></h2>
+    <h2>대기자 : <label id="joined_player"></label> / <label id="max_player"></label></h2>
+  </div>
+
+  <script>
+    $(() => {
+      create_room()
+    })
+  </script>
+
+  <!-- 참여하기를 클릭할 때 -->
+  <% } else if(mode === 'join_room') { %>
+
+  <div class="before_game">
+
+    <h1><label id="nickname"></label>님 환영합니다!</h1>
+
+    <div class="before_join">
+      <h2>방 번호를 입력해주세요</h2>
+      <input type="number" id="input_room_id" placeholder="방 번호 입력" required>
+      <input type="submit" id="btn_join_room" value="참여하기">
+      <br>
+      <label id="error_message" hidden"></label>
+    </div>
+    
+    <div class="join" hidden>
+      <h1>참가자를 대기중입니다...</h1>
+      <h2>방 번호 : <label id="room_id"></label></h2>
+      <h2>대기자 : <label id="joined_player"></label> / <label id="max_player"></label></h2>
+    </div>
+
+  </div>
+
+  <script>
+    $(() => {
+      search_room()
+    })
+  </script>
+
+  <% } %>
+
+  <div class="start_game" hidden>
+    <input type="range" id="field" min="0" max="10000" value="0" step="1" style="width: 100%;">
+  </div>
+
+
+
+</body>
+
+</html>

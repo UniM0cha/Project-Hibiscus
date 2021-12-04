@@ -42,5 +42,5 @@ const server = app.listen(port, () => {
   console.log(`Express Server Listening at ${port}`);
 });
 
-// 소켓 초기화
+// 소켓 임포트
 require('./config/socket')(server);

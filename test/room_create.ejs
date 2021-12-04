@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <%- include('templates/header', {title : "방 생성" }) %>
+</head>
+
+<body>
+  <h1><label id="nickname"></label>님 환영합니다!</h1>
+  <h1>참가자를 대기중입니다...</h1>
+  <h2>방 번호 : <label id="room_id"></label></h2>
+  <h2>대기자 : <label id="joined_player"></label> / <label id="max_player"></label></h2>
+
+  <!-- <input type="range" id="field" min="0" max="10000" value="0" step="1" style="width: 100%;" disabled> -->
+
+  <script>
+    // 문서 로딩 후 실행
+    $(() => {
+      create_room();
+    })
+  </script>
+  <%- include('templates/footer') %>
+</body>
+
+</html>

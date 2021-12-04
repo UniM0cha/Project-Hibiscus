@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-  <%- include('templates/header', {title : "메인페이지" }) %>
+  <%- include('templates/header', {title : "방 번호 입력" }) %>
 </head>
 
 <body>
@@ -14,8 +14,12 @@
   <label id="errorMessage" style="visibility: hidden;">해당 방이 없습니다! 번호를 다시 확인해주세요.</label>
 
   <script>
-
+    // 문서 로딩 후 실행
+    $(() => {
+      search_room();
+    })
   </script>
+  <%- include('templates/footer') %>
 </body>
 
 </html>

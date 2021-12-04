@@ -5,16 +5,15 @@ router.get('/', (req, res) => {
   res.render('main');
 });
 
-router.get('/room_create', (req, res) => {
-  res.render('room_create');
+router.get('/:mode', (req, res) => {
+  let mode = req.params.mode;
+  if (mode === 'create_room') {
+    res.render('game', { mode: 'create_room' });
+  }
+  
+  else if (mode === 'join_room') {
+    res.render('game', { mode: 'join_room' });
+  }
 });
-
-router.get('/room_before_join', (req, res) => {
-  res.render('room_before_join');
-});
-
-router.get('/room_join', (req, res) => {
-  res.render('room_join');
-})
 
 module.exports = router;
