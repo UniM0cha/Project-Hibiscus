@@ -1,38 +1,20 @@
-const express = require('express');
-const app = express.app();
+var express = require('express');
+var router = express.Router();
 
-const db_config = require('../config/database');
-const conn = db_config.init();
-db_config.connect(conn);
-
-app.get('/', (req, res) => {
-  res.render('index', { title: 'Express' });
+router.get('/', (req, res) => {
+  res.render('main');
 });
 
-app.get('/gameTest', (req, res) => {
-  res.render('game_test');
+router.get('/room_create', (req, res) => {
+  res.render('room_create');
 });
 
-app.get('/socketTest', (req, res) => {
-  res.render('socket_test');
+router.get('/room_before_join', (req, res) => {
+  res.render('room_before_join');
 });
 
-app.get('/main', (req, res) => {
-  res.render('main_page_test');
-});
-
-app.get('/waiting', (req, res) => {
-  res.render('waiting');
+router.get('/room_join', (req, res) => {
+  res.render('room_join');
 })
 
-app.get('/enter', (req, res) => {
-  res.render('enter');
-})
-
-
-
-
-
-
-
-module.exports = app;
+module.exports = router;

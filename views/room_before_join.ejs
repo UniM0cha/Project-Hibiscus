@@ -1,47 +1,21 @@
-<%- include('templates/header', {title : "대기실" }) %>
+<!DOCTYPE html>
+<html lang="en">
 
-  <body>
-    <h1 id="welcome"></h1>
-    <h1>참가하실 방의 번호를 입력해주세요!</h1>
-    <input type="text" id="roomID">
-    <button id="joinButton">참여하기</button>
-    <br>
-    <label id="errorMessage" style="visibility: hidden;">해당 방이 없습니다! 번호를 다시 확인해주세요.</label>
+<head>
+  <%- include('templates/header', {title : "메인페이지" }) %>
+</head>
 
-    <script>
-      const socket = io();
-      let search = location.search
-      let params = new URLSearchParams(search);
-      let user_id = params.get('user_id');
-      console.log('User ID :', user_id);
+<body>
+  <h1 id="welcome"></h1>
+  <h1>참가하실 방의 번호를 입력해주세요!</h1>
+  <input type="text" id="roomID">
+  <input type="submit" id="joinButton" value="참여하기">
+  <br>
+  <label id="errorMessage" style="visibility: hidden;">해당 방이 없습니다! 번호를 다시 확인해주세요.</label>
 
-      let room_id = '';
+  <script>
 
-      // 문서 로딩 후 실행
-      $(() => {
-        $('#welcome').text(`${user_id}님 안녕하세요!`);
+  </script>
+</body>
 
-        $('#joinButton').click(() => {
-          room_id = $('#roomID').val();
-          console.log(room_id);
-          let dataToSend = {
-            user_id: user_id,
-            room_id: room_id
-          };
-          socket.emit('check_room', dataToSend);
-        })
-      });
-
-      socket.on('no_room', () => {
-        console.log('방 찾지 못함');
-        $('#errorMessage').css('visibility', 'visible');
-      })
-
-      socket.on('is_room', () => {
-        console.log('방 찾음');
-        location.href = `/room_join?room_id=${room_id}&user_id=${user_id}`;
-      })
-    </script>
-  </body>
-
-  </html>
+</html>

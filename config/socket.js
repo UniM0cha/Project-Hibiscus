@@ -1,43 +1,103 @@
-//// WebSocekt 서버(ws) 생성 및 구동 ////
+module.exports = function(server) {
 
-// 1. ws 모듈 취득
-const wsModule = require('ws');
+  const io = require('socket.io')(server);
 
-module.exports = (_server) => {
-  // 2. WebSocket 서버 생성/구동
-  const webSocketServer = new wsModule.Server({
-    server: _server, // WebSocket서버에 연결할 HTTP서버를 지정한다.
-    // port: 30002      // WebSocket연결에 사용할 port를 지정한다(생략시, http서버와 동일한 port 공유 사용)
-  });
+  // 방 최대 참여자 수
+  const max_player = 3;
+  let rooms = io.sockets.adapter.rooms;
 
-  // connection(클라이언트 연결) 이벤트 처리
-  webSocketServer.on('connection', (ws, request) => {
-    // 1) 연결 클라이언트 IP 취득
-    const ip = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
-    console.log(`새로운 클라이언트[${ip}] 접속`);
+  // 소켓이 연결 되면
+  io.on('connection', (socket) => {
+    console.log(`클라이언트가 연결되었습니다. Socket ID : ${socket.id}`);
 
-    // 2) 클라이언트에게 메시지 전송
-    if (ws.readyState === ws.OPEN) {
-      // 연결 여부 체크
-      ws.send(`클라이언트[${ip}] 접속을 환영합니다 from 서버`);
-      // 데이터 전송
-    }
-
-    // 3) 클라이언트로부터 메시지 수신 이벤트 처리
-    ws.on('message', (msg) => {
-
-      console.log(`클라이언트[${ip}]에게 수신한 메시지 : ${msg}`);
-      ws.send('메시지 잘 받았습니다! from 서버');
+    // 소켓 끊기면
+    socket.on('disconnect', () => {
+      console.log(`클라이언트의 연결이 종료되었습니다. Socket ID : ${socket.id}`);
     });
 
-    // 4) 에러 처러
-    ws.on('error', (error) => {
-      console.log(`클라이언트[${ip}] 연결 에러발생 : ${error}`);
+    // 소켓 에러
+    socket.on('error', (error) => {
+      console.error(error);
     });
 
-    // 5) 연결 종료 이벤트 처리
-    ws.on('close', () => {
-      console.log(`클라이언트[${ip}] 웹소켓 연결 종료`);
+    // 방 만들기 요청 핸들러
+    socket.on('create_room', (data) => {
+      // 생성된 방 번호를 저장할 변수
+      let room_id = generateRoomCode();
+
+      // 해당 room code에 참가
+      socket.join(room_id);
+      console.log(`${room_id}번 방을 생성했습니다.`);
+      console.log('현재 만들어진 방: \n', rooms);
+
+      // 현재 참가자 불러옴
+      let joined_player = rooms.get(room_id).size;
+
+      // 유저 닉네임 불러옴
+      let user_id = data.user_id;
+
+      data = {
+        room_id: room_id,
+        joined_player: joined_player,
+        max_player: max_player,
+        user_id: user_id
+      }
+
+      // 조인 성공 이벤트 전송
+      socket.emit('join_success', data);
+    });
+
+    // 방이 있는지 체크
+    socket.on('check_room', (data) => {
+      let user_id = data.user_id;
+      let room_id = data.room_id;
+
+      if (!rooms.get(room_id)) {
+        socket.emit('no_room');
+      } else {
+        socket.emit('is_room');
+      }
+    });
+
+    // 방에 참여
+    socket.on('join_room', (data) => {
+      let user_id = data.user_id;
+      let room_id = data.room_id;
+      let room_joiner_size = rooms.get(room_id).size;
+
+      // 방이 가득 찼으면, 게임 시작
+      if (room_joiner_size === room_max_size) {
+        io.to(room_id).emit('game_start');
+      }
+      // 방이 가득 차지 않았다면, 대기자 더 모음
+      else {
+        socket.join(room_id);
+
+        room_joiner_size = rooms.get(room_id).size;
+        let room_max_size = room_max_size;
+
+        let dataToSend = {
+          room_joiner_size: room_joiner_size,
+          room_max_size: room_max_size,
+        };
+
+        // 방에 참여한 모두에게 정보 전달
+        io.to(room_id).emit('join_success', dataToSend);
+      }
     });
   });
 };
+
+function generateRoomCode() {
+  // rooms에 없는 숫자 찾기
+  while (true) {
+    let room_id = '';
+    for (let i = 0; i < 4; i++) {
+      room_id += Math.floor(Math.random() * 10);
+    }
+    if (!rooms.get(room_id)) {
+      console.log('중복되지 않는 방 번호 :', room_id);
+      return room_id;
+    }
+  }
+}

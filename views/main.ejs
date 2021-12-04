@@ -1,16 +1,22 @@
-<%- include('templates/header', {title : "메인페이지"}) %>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <%- include('templates/header', {title : "메인페이지"}) %>
+</head>
 
 <body>
+  <input type="text" id="nickname">
   <button id="btnCreateRoom">방만들기</button>
   <button id="btnEnterRoom">참여하기</button>
 
+  <%- include('templates/footer') %>
   <script>
     // 문서 로딩 후 실행
     $(() => {
-
       $('#btnCreateRoom').click(() => {
-        let user_id = prompt('사용하실 닉네임을 입력해주세요.');
-        if(user_id === null){
+        let user_id = $('#nickname').val();
+        if(user_id === ''){
           alert('닉네임을 입력해주세요!');
         } else {
           location.href = `/room_create?user_id=${user_id}`;
@@ -18,8 +24,8 @@
       })
 
       $('#btnEnterRoom').click(() => {
-        let user_id = prompt('사용하실 닉네임을 입력해주세요.');
-        if(user_id === null){
+        let user_id = $('#nickname').val();
+        if(user_id == ''){
           alert('닉네임을 입력해주세요!');
         } else {
           location.href = `/room_before_join?user_id=${user_id}`;
