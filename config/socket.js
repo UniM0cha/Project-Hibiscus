@@ -24,13 +24,7 @@ module.exports = function (server) {
       // 방장이 보낼 때 : "유저이름", null, null, null
       // 참여자가 보낼 때 : "유저이름", "방번호", null, null
 
-      let joined_player = null;
-      if (data.room_id !== null) {
-        joined_player = rooms.get(room_id).size;
-        console.log(joined_player);
-      }
-
-      let roomModel = new RoomModel(data.user_id, data.room_id, joined_player, max_player);
+      let roomModel = new RoomModel(data.user_id, data.room_id, null, max_player);
       
       // 방장 : "유저이름", null, null, 최대참여자수
       // 참여자 : "유저이름", "방번호", 참여자수, 최대참여자수
@@ -38,18 +32,18 @@ module.exports = function (server) {
       // 방 만들기 요청 핸들러
       socket.on('create_room', () => {
         console.log(`방 만들기 요청`);
-        createRoom(socket, rooms, roomModel);
+        createRoom(io, socket, rooms, roomModel);
       });
 
       // 방에 참여 시도
       socket.on('join_room', () => {
         console.log(`${roomModel.room_id}번 방에 접속 요청`);
-        joinRoom(socket, rooms, roomModel);
+        joinRoom(io, socket, rooms, roomModel);
       });
 
       socket.on('ready_pressed', () => {
         console.log('준비 버튼 클릭함');
-        readyPressed(socket, rooms, roomModel);
+        readyPressed(io, socket, rooms, roomModel);
       })
     });
   });
@@ -63,7 +57,7 @@ function RoomModel(user_id, room_id, joined_player, max_player) {
   this.max_player = max_player;
 }
 
-function createRoom(socket, rooms, roomModel) {
+function createRoom(io, socket, rooms, roomModel) {
   // 생성된 방 번호를 저장할 변수
   let room_id = generateRoomCode(rooms);
 
@@ -83,7 +77,7 @@ function createRoom(socket, rooms, roomModel) {
 
   // 방을 나간다면
   socket.on('disconnect', () => {
-    roomLeave(socket, rooms, roomModel);
+    roomLeave(io, socket, rooms, roomModel);
   });
 }
 
@@ -101,48 +95,45 @@ function generateRoomCode(rooms) {
   }
 }
 
-function joinRoom(socket, rooms, roomModel){
+function joinRoom(io, socket, rooms, roomModel){
   // 방이 있다면
   if (rooms.get(roomModel.room_id)) {
+    roomModel.joined_player = rooms.get(roomModel.room_id).size;
+    
     // 방이 가득 찼으면, 진입 불가
-    if (roomModel.joined_player === max_player) {
+    if (roomModel.joined_player === roomModel.max_player) {
       console.log('해당 방이 가득 참');
       socket.emit('join_full');
-    } else {
+
+    } else {  // 방에 자리 있으면
 
       socket.join(roomModel.room_id);
       console.log('방에 접속 성공');
-      roomModel.joined_player = rooms.get(room_id).size;
+      roomModel.joined_player = rooms.get(roomModel.room_id).size;
 
       // 방에 있는 모두에게 나 왔다고 알린다
-      io.to(room_id).emit('join_success', roomModel);
+      io.to(roomModel.room_id).emit('join_success', roomModel);
 
       // 방이 가득 찼으면, 게임 준비
-      if (joined_player === max_player) {
-        io.to(room_id).emit('ready_game');
+      if (roomModel.joined_player === roomModel.max_player) {
+        console.log('모든 참여자 들어옴');
+        io.to(roomModel.room_id).emit('ready_game');
+        rooms.get(roomModel.room_id).ready = 0;
+        console.log(rooms);
       }
 
       // 방을 나간다면
       socket.on('disconnect', () => {
-        roomLeave(socket, rooms, roomModel);
+        roomLeave(io, socket, rooms, roomModel);
       });
     }
   } else {
     // 방이 없다면
     socket.emit('join_noroom');
   }
-
-  socket.on('ready_button_pressed', () => {
-    console.log('준비버튼 눌림');
-    rooms.get(room_id).ready++;
-    console.log(rooms.get(room_id).ready);
-    if (rooms.ready === max_player) {
-      socket.to('room_id').emit('start_game');
-    }
-  });
 }
 
-function roomLeave(socket, rooms, roomModel){
+function roomLeave(io, socket, rooms, roomModel){
   console.log(`${roomModel.user_id}님이 방을 나갔습니다.`);
   socket.leave(roomModel.room_id);
   
@@ -150,11 +141,15 @@ function roomLeave(socket, rooms, roomModel){
   if(rooms.get(roomModel.room_id)){
     roomModel.joined_player = rooms.get(roomModel.room_id).size;
     // 방에 있는 모두에게 나 나간다고 알린다
-    io.to(room_id).emit('leave_room', roomModel);
+    io.to(roomModel.room_id).emit('leave_room', roomModel);
   }
-
 }
 
-function readyPressed(socket, rooms, roomModel) {
-
+function readyPressed(io, socket, rooms, roomModel) {
+  rooms.get(roomModel.room_id).ready++;
+  console.log(rooms);
+  if (rooms.get(roomModel.room_id).ready === roomModel.max_player){
+    console.log('모두 준비가 완료되었습니다. 게임을 시작합니다.');
+    io.to(roomModel.room_id).emit('start_game');
+  }
 }

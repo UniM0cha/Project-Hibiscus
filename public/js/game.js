@@ -55,7 +55,7 @@ function search_room() {
         user_id: user_id,
         room_id: room_id,
       };
-      socket.emit('clinet_info', data);
+      socket.emit('client_info', data);
       socket.emit('join_room');
     } else {
       $('#error_message')
@@ -97,26 +97,23 @@ function search_room() {
   })
 }
 
-// 게임관련 소켓 처리 함수
-function game() {
-  // 모두 들어왔을 때
-  socket.on('ready_game', () => {
-    $('#ready_game_button').attr("disabled", false);
+socket.on('ready_game', () => {
+  $('#ready_game_button').attr("disabled", false);
 
-    $('#ready_game_button').click(() => {
-      $('#ready_game_button')
-      .attr("disabled", true)
-      .val("준비 완료됨");
-      
-      socket.emit('ready_button_pressed');
-    })
+  $('#ready_game_button').click(() => {
+    console.log('준비버튼 클릭');
+    $('#ready_game_button')
+    .attr("disabled", true)
+    .val("준비 완료됨");
+    
+    socket.emit('ready_pressed');
   })
+})
 
-  // 모두 준비 완료를 눌렀을 때
-  socket.on('start_game', () => {
-    $('.before_game').hide();
-    $('.start_game').show();
-  })
-}
+// 모두 준비 완료를 눌렀을 때
+socket.on('start_game', () => {
+  $('.before_game').hide();
+  $('.start_game').show();
+})
 
 
