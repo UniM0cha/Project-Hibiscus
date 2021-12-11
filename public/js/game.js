@@ -1,7 +1,8 @@
 // 쿼리 스트링에서 유저 아이디 받아오기
-let search = location.search;
-let params = new URLSearchParams(search);
-let user_id = params.get('user_id');
+const search = location.search;
+const params = new URLSearchParams(search);
+const user_id = params.get('user_id');
+let room_id = null;
 console.log('User ID :', user_id);
 
 const socket = io();
@@ -13,7 +14,7 @@ function create_room() {
 
   let data = {
     user_id: user_id,
-    room_id: null,
+    room_id: room_id,
     joined_player: null,
     max_player: null
   };
@@ -23,6 +24,7 @@ function create_room() {
 
   // 방의 정보 받아옴
   socket.on('join_success', (data) => {
+    room_id = data.room_id;
     $('#room_id').text(data.room_id);
     $('#joined_player').text(data.joined_player);
     $('#max_player').text(data.max_player);
@@ -47,7 +49,7 @@ function search_room() {
 
   // 참여하기 버튼 클릭
   $('#btn_join_room').click(() => {
-    let room_id = $('#input_room_id').val();
+    room_id = $('#input_room_id').val();
     if(room_id !== ''){
       console.log(`${room_id}번 방에 접속을 시도합니다.`);
 
@@ -136,15 +138,13 @@ function game() {
     $('#speed').text(speed);
 
     // 과속 감지
-    if (speed >= 50) {
-      console.log('과속했습니다!');
-      $('#result').text('과속했습니다!');
-      let data = {
-        user_id: user_id,
-        room_id: room_id,
-      };
-      socket.emit('client_info', data);
-      socket.emit('over_speed');
+    if (Math.abs(speed) >= 100) {
+      overSpeed(timerId);
+    }
+
+    // 결승선 도달
+    if (currentValue === '10000'){
+      finish(timerId);
     }
 
     previousValue = currentValue;
@@ -157,3 +157,44 @@ socket.on('game_timer', (timer) => {
   let timer_text = `남은시간 : ${minutes}분 ${seconds}초`
   $('#timer').text(timer_text);
 })
+
+function overSpeed(timerId){
+  gameFailed();
+
+  console.log('과속했습니다!');
+  $('#result').text('과속했습니다!');
+  clearInterval(timerId);
+
+  let data = {
+    user_id: user_id,
+    room_id: room_id,
+  };
+  socket.emit('client_info', data);
+  socket.emit('over_speed');
+}
+
+// 무궁화 꽃이 피었습니다 텍스트 수신
+socket.on('hibiscus_text', (text) => {
+  let combText = $('#hibiscus').text() + text;
+  $('#hibiscus').text(combText);
+  console.log(combText);
+})
+
+socket.on('hibiscus_restart', () => {
+  $('#hibiscus').text('');
+  console.log("다시 시작");
+});
+
+function finish(timerId) {
+  let data = {
+    user_id: user_id,
+    room_id: room_id,
+  };
+  socket.emit('client_info', data);
+  socket.emit('finish');
+  clearInterval(timerId);
+}
+
+function gameFailed(){
+  $('#range').attr('disabled', true);
+}

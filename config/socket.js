@@ -25,7 +25,7 @@ module.exports = function (server) {
       // 참여자가 보낼 때 : "유저이름", "방번호", null, null
 
       let roomModel = new RoomModel(data.user_id, data.room_id, null, max_player);
-      
+
       // 방장 : "유저이름", null, null, 최대참여자수
       // 참여자 : "유저이름", "방번호", 참여자수, 최대참여자수
 
@@ -49,6 +49,10 @@ module.exports = function (server) {
       // 게임관련 이벤트들 정의
       socket.on('over_speed', () => {
         overSpeed();
+      })
+
+      socket.on('finish', () => {
+        finish(io, socket, rooms, roomModel);
       })
 
     });
@@ -163,9 +167,11 @@ function readyPressed(io, socket, rooms, roomModel) {
       console.log(`${roomModel.room_id}번 방 : ${timer}초 후에 시작...`);
       timer--;
       if (timer === -1){
+        // 게임 시작
         clearInterval(timerId);
         io.to(roomModel.room_id).emit('start_game');
-        startGameTimer(io, socket, rooms, roomModel);    
+        startGameTimer(io, socket, rooms, roomModel);
+        startHibiscus(io, socket, rooms, roomModel);
       }
     }, 1000);
   }
@@ -193,6 +199,51 @@ function startGameTimer(io, socket, rooms, roomModel) {
   }, 1000);
 }
 
+function startHibiscus(io, socket, rooms, roomModel) {
+  let text = ['무', '궁', '화', ' ', '꽃','이', ' ', '피', '었', '습', '니', '다'];
+  timeout(text, 0);
+  
+  function timeout(text, i) {
+    // 문자열 출력은 80ms ~ 500ms
+    let randTime = Math.floor(Math.random() * 421) + 80;
+
+    setTimeout(() => {
+      
+      io.to(roomModel.room_id).emit('hibiscus_text',text[i]);
+      i++;
+      
+      if (i === text.length){
+        stopHibiscus(io, socket, rooms, roomModel);
+        return;
+      }
+      
+      timeout(text, i);
+    }, randTime)
+  }
+}
+
+function stopHibiscus(io, socket, rooms, roomModel){
+  // 잠깐 쉬는타임 1000ms ~ 3000ms
+  let randTime = Math.floor(Math.random() * 3001) + 1000;
+  setTimeout(() => {
+    io.to(roomModel.room_id).emit('hibiscus_restart');
+    startHibiscus(io, socket, rooms, roomModel);
+  }, randTime)
+}
+
 function overSpeed() {
   console.log('과속했습니다!');
 }
+
+
+function finish(io, socket, rooms, roomModel) {
+  console.log(`${roomModel.room_id}번 방 : ${roomModel.user_id}님이 결승선을 통과했습니다!`);
+}
+
+/*
+해야할 것
+- 무궁화 꽃이 피었습니다 구현
+- 마우스 떼면 게임오버
+- 연결 끊기면 ready 변수 하나 줄어들기
+- 연결 끊기면 다시 준비완료 비활성화
+*/
