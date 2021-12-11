@@ -4,13 +4,56 @@
 <head>
   <%- include('templates/header', {title : "로비" }) %>
   <script src="js/main.js"></script>
+  <link rel="stylesheet" href="./css/main.css">
 </head>
 
 <body>
-  <input type="text" id="nickname">
-  <button id="btnCreateRoom">방만들기</button>
-  <button id="btnEnterRoom">참여하기</button>
-  <!-- <button id="test">테스트</button> -->
+  <!-- <input type="text" id="nickname" placeholder="닉네임을 입력해주세요">
+  <button class="input1" id="btnCreateRoom">방만들기</button>
+  <button class="input2" id="btnEnterRoom">참여하기</button> -->
+
+  <div id="inBox">
+    <center>
+    <p></p>
+    <h1 class="first">&nbspThe&nbsp&nbsp&nbsp&nbsp<br>Squad<br>Game</h1>
+    <p></p>
+    <input class="input1" type="text" id="nickname" placeholder="닉네임을 입력해주세요."><P><br></P>
+    <input class="input2" type="submit" id="btnCreateRoom" value="방만들기">&nbsp&nbsp&nbsp
+    <input class="input2" type="submit" id="btnEnterRoom" value="참여하기">
+    </center>
+  </div>
 </body>
 
 </html>
+
+
+<!-- <!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>처음화면</title>
+    <link rel="stylesheet" href="./css/main.css">
+    <script>
+    function openPopup1(){
+        window.open("방만들기화면.html", "new", "toolbar=no, menubar=no, scrollbars=yes, resizable=no, width=895, height=680, left=550, top=150" );
+    }
+    function openPopup2(){
+        window.open("방입장화면.html", "new", "toolbar=no, menubar=no, scrollbars=no, resizable=no, width=895, height=700, left=550, top=150" );
+    }
+    </script>
+  </head>
+  <body>
+    <div id="inBox">
+      <form method="post">
+        <center>
+        <p></p>
+        <h1 class="first">&nbspThe&nbsp&nbsp&nbsp&nbsp<br>Squad<br>Game</h1>
+        <p></p>
+        <input class="input1" type="text" name="nickname" placeholder="닉네임을 입력해주세요."><P><br></P>
+        <input class="input2" type="submit" name="makegame" value="방만들기" onclick="openPopup1()">&nbsp&nbsp&nbsp
+        <input class="input2" type="submit" name="ingame" value="방입장" onclick="openPopup2()">
+        </center>
+      </form>
+    </div>
+  </body>
+</html> -->

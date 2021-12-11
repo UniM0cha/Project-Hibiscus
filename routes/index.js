@@ -2,12 +2,15 @@ var express = require('express');
 var router = express.Router();
 
 router.get('/', (req, res) => {
-  res.render('main');
+  res.render('index');
 });
 
 router.get('/:mode', (req, res) => {
   let mode = req.params.mode;
-  if (mode === 'create_room') {
+  if (mode === 'main') {
+    res.render('main');
+  }
+  else if (mode === 'create_room') {
     res.render('game', { mode: 'create_room' });
   }
   

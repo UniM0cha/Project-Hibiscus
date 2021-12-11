@@ -1,0 +1,121 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: black;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: "Medula One", sans-serif;
+  font-size: 3em;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+span:first-child {
+  margin-right: 20px;
+}
+
+span:last-child {
+  color: black;
+  background-color: black;
+  animation: fadeWhite 4s forwards;
+  animation-delay: 2s;
+  position: relative;
+}
+span:last-child:after {
+  content: "Squad Game";
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  clip: rect(0, 900px, 0, 0);
+  background-color: black;
+  color: white;
+  animation: glitch 3s infinite alternate-reverse;
+  animation-delay: 4s;
+}
+span:last-child:before {
+  content: "Squad Game";
+  position: absolute;
+  left: -2px;
+  top: -2px;
+  clip: rect(0, 900px, 0, 0);
+  background-color: black;
+  color: white;
+  animation: glitch 3s infinite alternate-reverse;
+  animation-delay: 4s;
+}
+
+@keyframes fadeWhite {
+  100% {
+    color: white;
+  }
+}
+@keyframes glitch {
+  0% {
+    clip: rect(95px, 9999px, 76px, 0);
+  }
+  5% {
+    clip: rect(96px, 9999px, 73px, 0);
+  }
+  10% {
+    clip: rect(88px, 9999px, 78px, 0);
+  }
+  15% {
+    clip: rect(100px, 9999px, 25px, 0);
+  }
+  20% {
+    clip: rect(80px, 9999px, 66px, 0);
+  }
+  25% {
+    clip: rect(4px, 9999px, 33px, 0);
+  }
+  30% {
+    clip: rect(54px, 9999px, 99px, 0);
+  }
+  35% {
+    clip: rect(38px, 9999px, 33px, 0);
+  }
+  40% {
+    clip: rect(75px, 9999px, 54px, 0);
+  }
+  45% {
+    clip: rect(59px, 9999px, 97px, 0);
+  }
+  50% {
+    clip: rect(67px, 9999px, 92px, 0);
+  }
+  55% {
+    clip: rect(83px, 9999px, 12px, 0);
+  }
+  60% {
+    clip: rect(51px, 9999px, 86px, 0);
+  }
+  65% {
+    clip: rect(93px, 9999px, 12px, 0);
+  }
+  70% {
+    clip: rect(77px, 9999px, 53px, 0);
+  }
+  75% {
+    clip: rect(8px, 9999px, 45px, 0);
+  }
+  80% {
+    clip: rect(1px, 9999px, 10px, 0);
+  }
+  85% {
+    clip: rect(94px, 9999px, 51px, 0);
+  }
+  90% {
+    clip: rect(5px, 9999px, 35px, 0);
+  }
+  95% {
+    clip: rect(25px, 9999px, 25px, 0);
+  }
+  100% {
+    clip: rect(50px, 9999px, 53px, 0);
+  }
+}

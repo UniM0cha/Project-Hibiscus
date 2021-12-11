@@ -8,25 +8,37 @@
   <script src="js/game.js"></script>
 </head>
 
+
+
+
 <body>
   <!-- 방만들기를 클릭할 때 -->
   <% if(mode === 'create_room') { %>
   
   <div class="before_game">
     <h1><label id="nickname"></label>님 환영합니다!</h1>
-    <h1>참가자를 대기중입니다...</h1>
+    <h1 class="status">참가자를 대기중입니다...</h1>
     <h2>방 번호 : <label id="room_id"></label></h2>
     <h2>대기자 : <label id="joined_player"></label> / <label id="max_player"></label></h2>
   </div>
 
   <script>
     $(() => {
-      create_room()
+      create_room();
     })
   </script>
 
-  <!-- 참여하기를 클릭할 때 -->
+  <!-- 방만들기를 클릭할 때 끝 -->
+
+
+
+
   <% } else if(mode === 'join_room') { %>
+
+
+
+
+    <!-- 참여하기를 클릭할 때 -->
 
   <div class="before_game">
 
@@ -41,7 +53,7 @@
     </div>
     
     <div class="join" hidden>
-      <h1>참가자를 대기중입니다...</h1>
+      <h1 class="status">참가자를 대기중입니다...</h1>
       <h2>방 번호 : <label id="room_id"></label></h2>
       <h2>대기자 : <label id="joined_player"></label> / <label id="max_player"></label></h2>
     </div>
@@ -50,13 +62,41 @@
 
   <script>
     $(() => {
-      search_room()
+      search_room();
     })
   </script>
 
+<!-- 참여하기를 클릭할 때 끝 -->
   <% } %>
+  <div class="log_area">
+    
+  </div>
+
+
+
+
+
+
+
+
+
+
+  <div class="ready_game" hidden>
+    <input id="ready_game_button" type="button" value="준비 완료" disabled>
+  </div>
+  <script>
+    $(() => {
+      game();
+    })
+  </script>
+
+
+
+
+
 
   <div class="start_game" hidden>
+    <h1 id="board"></h1>
     <input type="range" id="field" min="0" max="10000" value="0" step="1" style="width: 100%;">
   </div>
 
