@@ -111,6 +111,10 @@ socket.on('ready_game', () => {
   })
 })
 
+socket.on('count_down', (timer) => {
+  $('#status').text(`준비가 완료되었습니다. 3초후에 게임을 시작합니다... ${timer}`);
+})
+
 // 모두 준비 완료를 눌렀을 때
 socket.on('start_game', () => {
   $('.lobby').hide();
@@ -120,31 +124,36 @@ socket.on('start_game', () => {
   game();
 })
 
-function game(){
-  setInterval("checkRange()", 100)
+function game() {
+  let currentValue = 0;
+  let previousValue = 0;
+  let speed = 0;
+
+  let timerId = setInterval(() => {
+    currentValue = $('#range').val();
+    console.log(currentValue);
+    speed = currentValue - previousValue;
+    $('#speed').text(speed);
+
+    // 과속 감지
+    if (speed >= 50) {
+      console.log('과속했습니다!');
+      $('#result').text('과속했습니다!');
+      let data = {
+        user_id: user_id,
+        room_id: room_id,
+      };
+      socket.emit('client_info', data);
+      socket.emit('over_speed');
+    }
+
+    previousValue = currentValue;
+  }, 100);
 }
 
-let currentValue = 0;
-let previousValue = 0;
-let speed = 0;
-
-function checkRange() {
-  currentValue = $('#range').val()
-  console.log(currentValue);
-  speed = currentValue - previousValue
-  $('#speed').text(speed);
-
-  if(speed >= 50){
-    console.log("과속했습니다!");
-    $('#result').text("과속했습니다!");
-    let data = {
-      user_id: user_id,
-      room_id: room_id,
-    };
-    socket.emit('client_info', data);
-    socket.emit('over_speed')
-  }
-
-  previousValue = currentValue;
-}
-
+socket.on('game_timer', (timer) => {
+  let minutes = Math.floor(timer / 60);
+  let seconds = timer % 60;
+  let timer_text = `남은시간 : ${minutes}분 ${seconds}초`
+  $('#timer').text(timer_text);
+})

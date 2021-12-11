@@ -50,7 +50,7 @@ module.exports = function (server) {
       socket.on('over_speed', () => {
         overSpeed();
       })
-      
+
     });
   });
 
@@ -155,9 +155,42 @@ function readyPressed(io, socket, rooms, roomModel) {
   rooms.get(roomModel.room_id).ready++;
   console.log(rooms);
   if (rooms.get(roomModel.room_id).ready === roomModel.max_player){
-    console.log('모두 준비가 완료되었습니다. 게임을 시작합니다.');
-    io.to(roomModel.room_id).emit('start_game');
+    console.log(`${roomModel.room_id}번 방 : 모두 준비가 완료되었습니다. 3초 후 게임을 시작합니다.`);
+    
+    let timer = 3;
+    let timerId = setInterval(() => {
+      io.to(roomModel.room_id).emit('count_down', timer);
+      console.log(`${roomModel.room_id}번 방 : ${timer}초 후에 시작...`);
+      timer--;
+      if (timer === -1){
+        clearInterval(timerId);
+        io.to(roomModel.room_id).emit('start_game');
+        startGameTimer(io, socket, rooms, roomModel);    
+      }
+    }, 1000);
   }
+}
+
+function startGameTimer(io, socket, rooms, roomModel) {
+  const timerSeconds = 60*3;    // 게임 시간 설정 : 3분
+
+  let timer = timerSeconds;
+
+  let timerId = setInterval(() => {
+    if (rooms.get(roomModel.room_id)){
+      io.to(roomModel.room_id).emit('game_timer', timer);
+      console.log(`${roomModel.room_id}번 방 : 게임시간 ${timer}초 남음`);
+      timer--;
+      if (timer === -1){
+        clearInterval(timerId);
+        // 여기다 타이머 끝나면 할 작동 기술
+      }
+    } else {
+      // 방이 사라질 경우 타이머 삭제해야함
+      console.log(`${roomModel.room_id}번 방이 사라졌습니다. 타이머를 종료합니다.`);
+      clearInterval(timerId);
+    }
+  }, 1000);
 }
 
 function overSpeed() {
