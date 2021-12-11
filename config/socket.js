@@ -11,23 +11,15 @@ module.exports = function (server) {
 
     // 일반 소켓 연결해제
     socket.on('disconnect', () => {
-      // io.to(room_id).emit('join_success', data);
       console.log(`클라이언트의 연결이 종료되었습니다. Socket ID : ${socket.id}`);
     });
-
     // 소켓 에러
     socket.on('error', (error) => {
       console.error(error);
     });
 
     socket.on('client_info', (data) => {
-      // 방장이 보낼 때 : "유저이름", null, null, null
-      // 참여자가 보낼 때 : "유저이름", "방번호", null, null
-
       let roomModel = new RoomModel(data.user_id, data.room_id, null, max_player);
-
-      // 방장 : "유저이름", null, null, 최대참여자수
-      // 참여자 : "유저이름", "방번호", 참여자수, 최대참여자수
 
       // 방 만들기 요청 핸들러
       socket.on('create_room', () => {
@@ -44,20 +36,18 @@ module.exports = function (server) {
       socket.on('ready_pressed', () => {
         console.log('준비 버튼 클릭함');
         readyPressed(io, socket, rooms, roomModel);
-      })
+      });
 
       // 게임관련 이벤트들 정의
       socket.on('over_speed', () => {
         overSpeed();
-      })
+      });
 
       socket.on('finish', () => {
         finish(io, socket, rooms, roomModel);
-      })
-
+      });
     });
   });
-
 };
 
 function RoomModel(user_id, room_id, joined_player, max_player) {
@@ -81,7 +71,7 @@ function createRoom(io, socket, rooms, roomModel) {
   roomModel.joined_player = rooms.get(room_id).size;
 
   // 방장 : "유저이름", "방아이디", 현재참여자수, 최대참여자수
-  
+
   // 조인 성공 이벤트 전송
   socket.emit('join_success', roomModel);
 
@@ -105,17 +95,17 @@ function generateRoomCode(rooms) {
   }
 }
 
-function joinRoom(io, socket, rooms, roomModel){
+function joinRoom(io, socket, rooms, roomModel) {
   // 방이 있다면
   if (rooms.get(roomModel.room_id)) {
     roomModel.joined_player = rooms.get(roomModel.room_id).size;
-    
+
     // 방이 가득 찼으면, 진입 불가
     if (roomModel.joined_player === roomModel.max_player) {
       console.log('해당 방이 가득 참');
       socket.emit('join_full');
-
-    } else {  // 방에 자리 있으면
+    } else {
+      // 방에 자리 있으면
 
       socket.join(roomModel.room_id);
       console.log('방에 접속 성공');
@@ -143,12 +133,12 @@ function joinRoom(io, socket, rooms, roomModel){
   }
 }
 
-function roomLeave(io, socket, rooms, roomModel){
+function roomLeave(io, socket, rooms, roomModel) {
   console.log(`${roomModel.user_id}님이 방을 나갔습니다.`);
   socket.leave(roomModel.room_id);
-  
+
   // 방이 존재한다면
-  if(rooms.get(roomModel.room_id)){
+  if (rooms.get(roomModel.room_id)) {
     roomModel.joined_player = rooms.get(roomModel.room_id).size;
     // 방에 있는 모두에게 나 나간다고 알린다
     io.to(roomModel.room_id).emit('leave_room', roomModel);
@@ -158,15 +148,15 @@ function roomLeave(io, socket, rooms, roomModel){
 function readyPressed(io, socket, rooms, roomModel) {
   rooms.get(roomModel.room_id).ready++;
   console.log(rooms);
-  if (rooms.get(roomModel.room_id).ready === roomModel.max_player){
+  if (rooms.get(roomModel.room_id).ready === roomModel.max_player) {
     console.log(`${roomModel.room_id}번 방 : 모두 준비가 완료되었습니다. 3초 후 게임을 시작합니다.`);
-    
+
     let timer = 3;
     let timerId = setInterval(() => {
       io.to(roomModel.room_id).emit('count_down', timer);
       console.log(`${roomModel.room_id}번 방 : ${timer}초 후에 시작...`);
       timer--;
-      if (timer === -1){
+      if (timer === -1) {
         // 게임 시작
         clearInterval(timerId);
         io.to(roomModel.room_id).emit('start_game');
@@ -178,16 +168,16 @@ function readyPressed(io, socket, rooms, roomModel) {
 }
 
 function startGameTimer(io, socket, rooms, roomModel) {
-  const timerSeconds = 60*3;    // 게임 시간 설정 : 3분
+  const timerSeconds = 60 * 3; // 게임 시간 설정 : 3분
 
   let timer = timerSeconds;
 
   let timerId = setInterval(() => {
-    if (rooms.get(roomModel.room_id)){
+    if (rooms.get(roomModel.room_id)) {
       io.to(roomModel.room_id).emit('game_timer', timer);
       console.log(`${roomModel.room_id}번 방 : 게임시간 ${timer}초 남음`);
       timer--;
-      if (timer === -1){
+      if (timer === -1) {
         clearInterval(timerId);
         // 여기다 타이머 끝나면 할 작동 기술
       }
@@ -200,41 +190,39 @@ function startGameTimer(io, socket, rooms, roomModel) {
 }
 
 function startHibiscus(io, socket, rooms, roomModel) {
-  let text = ['무', '궁', '화', ' ', '꽃','이', ' ', '피', '었', '습', '니', '다'];
+  let text = ['무', '궁', '화', ' ', '꽃', '이', ' ', '피', '었', '습', '니', '다'];
   timeout(text, 0);
-  
+
   function timeout(text, i) {
     // 문자열 출력은 80ms ~ 500ms
     let randTime = Math.floor(Math.random() * 421) + 80;
 
     setTimeout(() => {
-      
-      io.to(roomModel.room_id).emit('hibiscus_text',text[i]);
+      io.to(roomModel.room_id).emit('hibiscus_text', text[i]);
       i++;
-      
-      if (i === text.length){
+
+      if (i === text.length) {
         stopHibiscus(io, socket, rooms, roomModel);
         return;
       }
-      
+
       timeout(text, i);
-    }, randTime)
+    }, randTime);
   }
 }
 
-function stopHibiscus(io, socket, rooms, roomModel){
+function stopHibiscus(io, socket, rooms, roomModel) {
   // 잠깐 쉬는타임 1000ms ~ 3000ms
   let randTime = Math.floor(Math.random() * 3001) + 1000;
   setTimeout(() => {
     io.to(roomModel.room_id).emit('hibiscus_restart');
     startHibiscus(io, socket, rooms, roomModel);
-  }, randTime)
+  }, randTime);
 }
 
 function overSpeed() {
   console.log('과속했습니다!');
 }
-
 
 function finish(io, socket, rooms, roomModel) {
   console.log(`${roomModel.room_id}번 방 : ${roomModel.user_id}님이 결승선을 통과했습니다!`);
@@ -243,7 +231,10 @@ function finish(io, socket, rooms, roomModel) {
 /*
 해야할 것
 - 무궁화 꽃이 피었습니다 구현
-- 마우스 떼면 게임오버
+- 마우스 떼면 게임오버 구현
+- 제한시간 내에 도착하지 못하면 게임오버 구현
+- 도착하면 게임 성공 구현
+- 다른 참여자들 진행상황 구현
 - 연결 끊기면 ready 변수 하나 줄어들기
 - 연결 끊기면 다시 준비완료 비활성화
 */

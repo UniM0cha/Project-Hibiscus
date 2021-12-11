@@ -3,9 +3,9 @@
 
 <head>
   <%- include('templates/header', {title : "게임화면" }) %>
-  <!-- soket.io -->
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="js/game.js"></script>
+    <!-- soket.io -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/game.js"></script>
 
 </head>
 
@@ -16,21 +16,22 @@
 
   <!-- 방을 참가하는 과정에 보여줄 화면 -->
   <div class="ready_game">
+    
     <div class="welcome">
       <h1><label id="nickname"></label>님 환영합니다!</h1>
     </div>
 
-    <% if(mode === 'create_room') { %>
+    <% if(mode==='create_room' ) { %>
       <!-- 방만들기를 클릭할 때 표시될 화면 -->
-    
+
     <script>
       $(() => {
         create_room();
       })
     </script>
 
-  <% } else if(mode === 'join_room') { %>
-    <!-- 참여하기를 클릭할 때 표시될 화면 -->
+    <% } else if(mode==='join_room' ) { %>
+      <!-- 참여하기를 클릭할 때 표시될 화면 -->
     <script>
       $(() => {
         search_room();
@@ -53,6 +54,7 @@
       <h2>대기자 : <label id="joined_player"></label> / <label id="max_player"></label></h2>
       <input id="ready_game_button" type="button" value="준비 완료" disabled>
     </div>
+
   </div>
 
   <!-- 게임 시작할 때 보여줄 화면 -->
