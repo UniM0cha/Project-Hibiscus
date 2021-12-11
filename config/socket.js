@@ -2,7 +2,7 @@ module.exports = function (server) {
   const io = require('socket.io')(server);
 
   // 방 최대 참여자 수
-  const max_player = 3;
+  const max_player = 2;
   let rooms = io.sockets.adapter.rooms;
 
   // 소켓이 연결 되면
@@ -45,6 +45,12 @@ module.exports = function (server) {
         console.log('준비 버튼 클릭함');
         readyPressed(io, socket, rooms, roomModel);
       })
+
+      // 게임관련 이벤트들 정의
+      socket.on('over_speed', () => {
+        overSpeed();
+      })
+      
     });
   });
 
@@ -152,4 +158,8 @@ function readyPressed(io, socket, rooms, roomModel) {
     console.log('모두 준비가 완료되었습니다. 게임을 시작합니다.');
     io.to(roomModel.room_id).emit('start_game');
   }
+}
+
+function overSpeed() {
+  console.log('과속했습니다!');
 }

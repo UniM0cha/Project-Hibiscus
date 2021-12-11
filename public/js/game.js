@@ -9,7 +9,7 @@ const socket = io();
 // 방 생성 함수
 function create_room() {
   $('#nickname').text(user_id);
-  $('.ready_game').show();
+  $('.lobby').show();
 
   let data = {
     user_id: user_id,
@@ -82,8 +82,7 @@ function search_room() {
   socket.on('join_success', (data) => {
     console.log('접속 성공');
     $('.before_join').hide();
-    $('.join').show();
-    $('.ready_game').show();
+    $('.lobby').show();
 
     $('#room_id').text(data.room_id);
     $('#joined_player').text(data.joined_player);
@@ -97,8 +96,10 @@ function search_room() {
   })
 }
 
+// 참여자가 모두 들어왔을 때
 socket.on('ready_game', () => {
   $('#ready_game_button').attr("disabled", false);
+  $('#status').text('참가자가 모두 들어왔습니다. 준비 완료 버튼을 눌러주세요!');
 
   $('#ready_game_button').click(() => {
     console.log('준비버튼 클릭');
@@ -112,8 +113,38 @@ socket.on('ready_game', () => {
 
 // 모두 준비 완료를 눌렀을 때
 socket.on('start_game', () => {
-  $('.before_game').hide();
+  $('.lobby').hide();
+  $('.welcome').hide();
   $('.start_game').show();
+
+  game();
 })
 
+function game(){
+  setInterval("checkRange()", 100)
+}
+
+let currentValue = 0;
+let previousValue = 0;
+let speed = 0;
+
+function checkRange() {
+  currentValue = $('#range').val()
+  console.log(currentValue);
+  speed = currentValue - previousValue
+  $('#speed').text(speed);
+
+  if(speed >= 50){
+    console.log("과속했습니다!");
+    $('#result').text("과속했습니다!");
+    let data = {
+      user_id: user_id,
+      room_id: room_id,
+    };
+    socket.emit('client_info', data);
+    socket.emit('over_speed')
+  }
+
+  previousValue = currentValue;
+}
 
