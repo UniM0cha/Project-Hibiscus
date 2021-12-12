@@ -2,7 +2,7 @@ module.exports = function (server) {
   const io = require('socket.io')(server);
 
   // 방 최대 참여자 수
-  const max_player = 2;
+  const max_player = 3;
   let rooms = io.sockets.adapter.rooms;
 
   // 소켓이 연결 되면
@@ -78,7 +78,10 @@ function createRoom(io, socket, rooms, roomModel) {
   roomModel.room_id = room_id;
   roomModel.joined_player = rooms.get(room_id).size;
 
-  // 방장 : "유저이름", "방아이디", 현재참여자수, 최대참여자수
+  // 각 방 객체에 user_id 배열 추가, 방장 user_id 추가
+  rooms.get(room_id).user_id = [];
+  rooms.get(room_id).user_id.push(roomModel.user_id);
+  console.log(rooms.get(room_id));
 
   // 조인 성공 이벤트 전송
   socket.emit('join_success', roomModel);
@@ -118,6 +121,10 @@ function joinRoom(io, socket, rooms, roomModel) {
       socket.join(roomModel.room_id);
       console.log('방에 접속 성공');
       roomModel.joined_player = rooms.get(roomModel.room_id).size;
+
+      // 각 방 user_id에 user_id 추가
+      rooms.get(roomModel.room_id).user_id.push(roomModel.user_id);
+      console.log(rooms.get(roomModel.room_id));
 
       // 방에 있는 모두에게 나 왔다고 알린다
       io.to(roomModel.room_id).emit('join_success', roomModel);
@@ -168,10 +175,16 @@ function readyPressed(io, socket, rooms, roomModel) {
         // 게임 시작
         clearInterval(timerId);
 
+        let socket_ids = Array.from(rooms.get(roomModel.room_id));
+        let user_ids = rooms.get(roomModel.room_id).user_id;
+        console.log(socket_ids);
+        console.log(user_ids);
+
         let data = {
-          roomModel: roomModel,
-          socket_id: socket.id,
+          socket_ids: socket_ids,
+          user_ids: user_ids,
         }
+
         io.to(roomModel.room_id).emit('start_game', data);
         
         startGameTimer(io, socket, rooms, roomModel);
@@ -250,14 +263,3 @@ function mouseUp() {
 function finish(io, socket, rooms, roomModel) {
   console.log(`${roomModel.room_id}번 방 : ${roomModel.user_id}님이 결승선을 통과했습니다!`);
 }
-
-/*
-해야할 것
-- 무궁화 꽃이 피었습니다 구현
-- 마우스 떼면 게임오버 구현
-- 제한시간 내에 도착하지 못하면 게임오버 구현
-- 도착하면 게임 성공 구현
-- 다른 참여자들 진행상황 구현
-- 연결 끊기면 ready 변수 하나 줄어들기
-- 연결 끊기면 다시 준비완료 비활성화
-*/

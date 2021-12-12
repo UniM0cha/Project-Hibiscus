@@ -148,6 +148,7 @@ function game() {
     previousValue = currentValue;
   }, 100);
 
+  // 마우스 뗌 감지
   $('#range').on('mousedown', (e) => {
     console.log('range 누름');
     $('#range').on('mouseup', (e) => {
@@ -160,36 +161,44 @@ function game() {
 
 // 다른 플레이어들 표시하는 함수
 function generateOtherPlayer(data) {
-  let socket_id = data.socket_id;
-  let max_player = data.roomModel.max_player;
+  let socket_ids = data.socket_ids;
+  let user_ids = data.user_ids;
+  console.log(socket_ids);
+  console.log(user_ids);
 
   let container = document.createElement("div");
-  container.className = players_grid_container;
+  container.className = 'players_grid_container';
   
-  for(let i = 0; i < max_player; i++) {
+  for(let i = 0; i < socket_ids.length; i++) {
+    
+    // 자신 제외
+    if (socket_ids[i] === socket.id){
+      continue;
+    }
+
     let item = document.createElement('div');
     item.className = "players_grid_item";
 
     let nickname = document.createElement('h3');
     nickname.className = "players_name";
-    nickname.innerHTML = "플레이어 이름.. 어케 받아와 ㅠ"
+    nickname.innerHTML = user_ids[i];
     
     let range = document.createElement('input');
+    range.type = 'range';
     range.className = "players_range";
-    range.id = socket_id;
-    range.type = range;
+    range.id = socket_ids[i];
+    range.value = 0;
 
     let result = document.createElement('h3');
     result.className = "players_result"
-    result.id = socket_id;
+    result.id = socket_ids[i];
 
 
     item.appendChild(nickname);
     item.appendChild(range);
+    item.appendChild(result);
+    container.appendChild(item);
   }
-
-
-
 
   let input = document.getElementById("other_player");
   input.appendChild(container);
