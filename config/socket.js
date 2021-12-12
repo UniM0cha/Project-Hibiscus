@@ -51,9 +51,19 @@ module.exports = function (server) {
         }
       });
 
+      socket.on('to_server_range', (currentValue) => {
+        console.log('value값 가져옴');
+        data = {
+          socket_id: socket.id,
+          value: currentValue,
+        }
+        socket.broadcast.to(roomModel.room_id).emit('to_client_range', data);
+      })
+
       socket.on('finish', () => {
         finish(io, socket, rooms, roomModel);
       });
+
     });
   });
 };
