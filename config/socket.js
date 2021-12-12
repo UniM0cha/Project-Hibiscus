@@ -39,8 +39,16 @@ module.exports = function (server) {
       });
 
       // 게임관련 이벤트들 정의
-      socket.on('over_speed', () => {
-        overSpeed();
+      socket.on('game_failed', (reason) => {
+        if(reason === 'over_speed'){
+          overSpeed();
+        }
+        else if (reason === 'captured'){
+          captured();
+        }
+        else if (reason === 'mouse_up') {
+          mouseUp();
+        }
       });
 
       socket.on('finish', () => {
@@ -159,7 +167,13 @@ function readyPressed(io, socket, rooms, roomModel) {
       if (timer === -1) {
         // 게임 시작
         clearInterval(timerId);
-        io.to(roomModel.room_id).emit('start_game');
+
+        let data = {
+          roomModel: roomModel,
+          socket_id: socket.id,
+        }
+        io.to(roomModel.room_id).emit('start_game', data);
+        
         startGameTimer(io, socket, rooms, roomModel);
         startHibiscus(io, socket, rooms, roomModel);
       }
@@ -202,6 +216,7 @@ function startHibiscus(io, socket, rooms, roomModel) {
       i++;
 
       if (i === text.length) {
+        io.to(roomModel.room_id).emit('hibiscus_watch');
         stopHibiscus(io, socket, rooms, roomModel);
         return;
       }
@@ -212,8 +227,8 @@ function startHibiscus(io, socket, rooms, roomModel) {
 }
 
 function stopHibiscus(io, socket, rooms, roomModel) {
-  // 잠깐 쉬는타임 1000ms ~ 3000ms
-  let randTime = Math.floor(Math.random() * 3001) + 1000;
+  // 술래가 보는 시간 1000ms ~ 3000ms
+  let randTime = Math.floor(Math.random() * 5001) + 1000;
   setTimeout(() => {
     io.to(roomModel.room_id).emit('hibiscus_restart');
     startHibiscus(io, socket, rooms, roomModel);
@@ -222,6 +237,14 @@ function stopHibiscus(io, socket, rooms, roomModel) {
 
 function overSpeed() {
   console.log('과속했습니다!');
+}
+
+function captured() {
+  console.log('술래에게 잡혔습니다!');
+}
+
+function mouseUp() {
+  console.log('마우스에서 손을 뗐습니다!');
 }
 
 function finish(io, socket, rooms, roomModel) {

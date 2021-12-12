@@ -35,11 +35,6 @@ function create_room() {
     $('#joined_player').text(data.joined_player);
     $('#max_player').text(data.max_player);
   });
-
-  // range mousedown 이벤트
-  $('#field').on('mousedown', (e) => {
-    console.log('range 누름');
-  });
 }
 
 // 방 참여 함수
@@ -109,20 +104,27 @@ socket.on('count_down', (timer) => {
 });
 
 // 모두 준비 완료를 눌렀을 때
-socket.on('start_game', () => {
+socket.on('start_game', (data) => {
   $('.lobby').hide();
   $('.welcome').hide();
   $('.start_game').show();
 
+  generateOtherPlayer(data);
   game();
 });
+
+/////////////////////////////////////////////
+///////////  게임 관련 함수들 ///////////////
+/////////////////////////////////////////////
+let hibiscus = false;
 
 function game() {
   let currentValue = 0;
   let previousValue = 0;
   let speed = 0;
 
-  let timerId = setInterval(() => {
+  // range의 상태를 확인할 타이머 등록
+  let rangeChecker = setInterval(() => {
     currentValue = $('#range').val();
     console.log(currentValue);
     speed = currentValue - previousValue;
@@ -130,16 +132,67 @@ function game() {
 
     // 과속 감지
     if (Math.abs(speed) >= 100) {
-      overSpeed(timerId);
+      overSpeed(rangeChecker);
+    }
+
+    // 무궁화 꽃이 피었습니다 일때 움직임 감지
+    if (hibiscus === true && Math.abs(speed) > 0) {
+      captured(rangeChecker);
     }
 
     // 결승선 도달
     if (currentValue === '10000') {
-      finish(timerId);
+      finish(rangeChecker);
     }
 
     previousValue = currentValue;
   }, 100);
+
+  $('#range').on('mousedown', (e) => {
+    console.log('range 누름');
+    $('#range').on('mouseup', (e) => {
+      console.log('range 뗌');
+      mouseUp(rangeChecker);
+    })
+  })
+
+}
+
+// 다른 플레이어들 표시하는 함수
+function generateOtherPlayer(data) {
+  let socket_id = data.socket_id;
+  let max_player = data.roomModel.max_player;
+
+  let container = document.createElement("div");
+  container.className = players_grid_container;
+  
+  for(let i = 0; i < max_player; i++) {
+    let item = document.createElement('div');
+    item.className = "players_grid_item";
+
+    let nickname = document.createElement('h3');
+    nickname.className = "players_name";
+    nickname.innerHTML = "플레이어 이름.. 어케 받아와 ㅠ"
+    
+    let range = document.createElement('input');
+    range.className = "players_range";
+    range.id = socket_id;
+    range.type = range;
+
+    let result = document.createElement('h3');
+    result.className = "players_result"
+    result.id = socket_id;
+
+
+    item.appendChild(nickname);
+    item.appendChild(range);
+  }
+
+
+
+
+  let input = document.getElementById("other_player");
+  input.appendChild(container);
 }
 
 socket.on('game_timer', (timer) => {
@@ -149,33 +202,50 @@ socket.on('game_timer', (timer) => {
   $('#timer').text(timer_text);
 });
 
-function overSpeed(timerId) {
-  gameFailed();
-
-  console.log('과속했습니다!');
-  $('#result').text('과속했습니다!');
-  clearInterval(timerId);
-
-  let data = {
-    user_id: user_id,
-    room_id: room_id,
-  };
-  socket.emit('client_info', data);
-  socket.emit('over_speed');
-}
-
 // 무궁화 꽃이 피었습니다 텍스트 수신
 socket.on('hibiscus_text', (text) => {
   let combText = $('#hibiscus').text() + text;
   $('#hibiscus').text(combText);
-  console.log(combText);
 });
 
+// 무궁화 꽃이 피었습니다 초기화
 socket.on('hibiscus_restart', () => {
+  hibiscus = false;
   $('#hibiscus').text('');
   console.log('다시 시작');
 });
 
+socket.on('hibiscus_watch', () => {
+  hibiscus = true;
+});
+
+
+////// 탈락 이벤트 함수들.... 통합 가능하겠는데? ///////
+function overSpeed(timerId) {
+  console.log('과속했습니다!');
+  $('#result').text('과속했습니다!');
+
+  let reason = 'over_speed';
+  gameFailed(timerId, reason);
+}
+
+function captured(timerId) {
+  console.log('술래에게 잡혔습니다!');
+  $('#result').text('술래에게 잡혔습니다!');
+
+  let reason = 'captured';
+  gameFailed(timerId, reason);
+}
+
+function mouseUp(timerId) {
+  console.log('마우스에서 손을 뗐습니다!');
+  $('#result').text('마우스에서 손을 뗐습니다!');
+
+  let reason = 'mouse_up';
+  gameFailed(timerId, reason);
+}
+
+// 통과 함수
 function finish(timerId) {
   let data = {
     user_id: user_id,
@@ -186,6 +256,16 @@ function finish(timerId) {
   clearInterval(timerId);
 }
 
-function gameFailed() {
+// 게임에 탈락했을 때 서버에게 이유를 보낼 함수
+function gameFailed(timerId, reason) {
   $('#range').attr('disabled', true);
+
+  let data = {
+    user_id: user_id,
+    room_id: room_id,
+  };
+
+  socket.emit('client_info', data);
+  socket.emit('game_failed', reason);
+  clearInterval(timerId);
 }
