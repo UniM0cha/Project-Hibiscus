@@ -2,7 +2,7 @@ module.exports = function (server) {
   const io = require('socket.io')(server);
 
   // 방 최대 참여자 수
-  const max_player = 3;
+  const max_player = 10;
   let rooms = io.sockets.adapter.rooms;
 
   // 소켓이 연결 되면
@@ -40,14 +40,12 @@ module.exports = function (server) {
 
       // 게임관련 이벤트들 정의
       socket.on('game_failed', (reason) => {
-        if(reason === 'over_speed'){
-          overSpeed();
-        }
-        else if (reason === 'captured'){
-          captured();
-        }
-        else if (reason === 'mouse_up') {
-          mouseUp();
+        if (reason === 'over_speed') {
+          overSpeed(io, socket, rooms, roomModel);
+        } else if (reason === 'captured') {
+          captured(io, socket, rooms, roomModel);
+        } else if (reason === 'mouse_up') {
+          mouseUp(io, socket, rooms, roomModel);
         }
       });
 
@@ -56,14 +54,13 @@ module.exports = function (server) {
         data = {
           socket_id: socket.id,
           value: currentValue,
-        }
+        };
         socket.broadcast.to(roomModel.room_id).emit('to_client_range', data);
-      })
+      });
 
       socket.on('finish', () => {
         finish(io, socket, rooms, roomModel);
       });
-
     });
   });
 };
@@ -193,10 +190,10 @@ function readyPressed(io, socket, rooms, roomModel) {
         let data = {
           socket_ids: socket_ids,
           user_ids: user_ids,
-        }
+        };
 
         io.to(roomModel.room_id).emit('start_game', data);
-        
+
         startGameTimer(io, socket, rooms, roomModel);
         startHibiscus(io, socket, rooms, roomModel);
       }
@@ -258,18 +255,56 @@ function stopHibiscus(io, socket, rooms, roomModel) {
   }, randTime);
 }
 
-function overSpeed() {
+function overSpeed(io, socket, rooms, roomModel) {
   console.log('과속했습니다!');
+  reason = 'over_speed';
+  gameFailed(io, socket, rooms, roomModel, reason);
+
 }
 
-function captured() {
+function captured(io, socket, rooms, roomModel) {
   console.log('술래에게 잡혔습니다!');
+  reason = 'captured';
+  gameFailed(io, socket, rooms, roomModel, reason);
 }
 
-function mouseUp() {
+function mouseUp(io, socket, rooms, roomModel) {
   console.log('마우스에서 손을 뗐습니다!');
+  reason = 'mouse_up';
+  gameFailed(io, socket, rooms, roomModel, reason);
 }
 
 function finish(io, socket, rooms, roomModel) {
   console.log(`${roomModel.room_id}번 방 : ${roomModel.user_id}님이 결승선을 통과했습니다!`);
+  rooms.get(roomModel.room_id).finished_player = [];
+  
+}
+
+function gameFailed(io, socket, rooms, roomModel, reason) {
+  let data = {
+    reason: reason,
+    socket_id: socket.id,
+  }
+  console.log(reason, socket.id, roomModel.room_id);
+  socket.broadcast.to(roomModel.room_id).emit('other_game_failed', data);
+
+  rooms.get(roomModel.room_id).failed_player = [];
+}
+
+
+
+function gameEnd(io, socket, rooms, roomModel) {
+  /*
+  게임이 종료됐을 때 -> 게임 결과 창으로 이동...
+  얘를 또다른 페이지로 만들었을 때?
+  페이지 이동은.............. 클라이언트에게 정보를 전달했을때 location.href로 이동....인데.......
+  그렇게 되면 소켓 연결이 끊어질테고
+  게임을 완료한 사람들의 리스트를 어떻게 갖고오지?
+
+  리스트를 다른곳에...... 등록.....할 수 있나?
+  어떻게?
+  어떻게 하지?
+  get?
+  
+  */
 }

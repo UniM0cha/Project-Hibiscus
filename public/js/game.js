@@ -132,17 +132,17 @@ function game() {
 
     // 과속 감지
     if (Math.abs(speed) >= 100) {
-      overSpeed(rangeChecker,sendRangeValueTimer);
+      overSpeed(rangeChecker, sendRangeValueTimer);
     }
 
     // 무궁화 꽃이 피었습니다 일때 움직임 감지
-    if (hibiscus === true && Math.abs(speed) > 0) {
-      captured(rangeChecker,sendRangeValueTimer);
+    else if (hibiscus === true && Math.abs(speed) > 0) {
+      captured(rangeChecker, sendRangeValueTimer);
     }
 
     // 결승선 도달
-    if (currentValue === '10000') {
-      finish(rangeChecker,sendRangeValueTimer);
+    else if (currentValue === '10000') {
+      finish(rangeChecker, sendRangeValueTimer);
     }
 
     previousValue = currentValue;
@@ -159,8 +159,8 @@ function game() {
     $('#range').on('mouseup', (e) => {
       console.log('range 뗌');
       mouseUp(rangeChecker);
-    })
-  })
+    });
+  });
 }
 
 // 다른 플레이어들 표시하는 함수
@@ -170,26 +170,25 @@ function generateOtherPlayer(data) {
   console.log(socket_ids);
   console.log(user_ids);
 
-  let container = document.createElement("div");
+  let container = document.createElement('div');
   container.className = 'players_grid_container';
-  
-  for(let i = 0; i < socket_ids.length; i++) {
-    
+
+  for (let i = 0; i < socket_ids.length; i++) {
     // 자신 제외
-    if (socket_ids[i] === socket.id){
+    if (socket_ids[i] === socket.id) {
       continue;
     }
 
     let item = document.createElement('div');
-    item.className = "players_grid_item";
+    item.className = 'players_grid_item';
 
     let nickname = document.createElement('h3');
-    nickname.className = "players_name";
+    nickname.className = 'players_name';
     nickname.innerHTML = user_ids[i];
-    
+
     let range = document.createElement('input');
     range.type = 'range';
-    range.className = "players_range";
+    range.className = 'players_range';
     range.id = socket_ids[i];
     range.value = 0;
     range.min = 0;
@@ -197,9 +196,8 @@ function generateOtherPlayer(data) {
     range.step = 1;
 
     let result = document.createElement('h3');
-    result.className = "players_result"
+    result.className = 'players_result';
     result.id = socket_ids[i];
-
 
     item.appendChild(nickname);
     item.appendChild(range);
@@ -207,7 +205,7 @@ function generateOtherPlayer(data) {
     container.appendChild(item);
   }
 
-  let input = document.getElementById("other_player");
+  let input = document.getElementById('other_player');
   input.appendChild(container);
 }
 
@@ -217,8 +215,9 @@ socket.on('to_client_range', (data) => {
   console.log(`value값 가져옴 ${value}`);
 
   $(`#${socket_id}`).filter('.players_range').val(value);
-})
+});
 
+// 타이머
 socket.on('game_timer', (timer) => {
   let minutes = Math.floor(timer / 60);
   let seconds = timer % 60;
@@ -242,7 +241,6 @@ socket.on('hibiscus_restart', () => {
 socket.on('hibiscus_watch', () => {
   hibiscus = true;
 });
-
 
 ////// 탈락 이벤트 함수들.... 통합 가능하겠는데? ///////
 function overSpeed(timerId1, timerId2) {
@@ -295,3 +293,23 @@ function gameFailed(timerId1, timerId2, reason) {
   clearInterval(timerId1);
   clearInterval(timerId2);
 }
+
+socket.on('other_game_failed', (data) => {
+  let reason = data.reason;
+  let socket_id = data.socket_id;
+
+  console.log(reason, socket_id);
+
+  if (reason === 'over_speed'){
+    $('.players_result').filter(`#${socket_id}`).text('과속했습니다!');
+    $('.players_range').filter(`#${socket_id}`).attr('disabled', true);
+  }
+  else if (reason === 'captured') {
+    $('.players_result').filter(`#${socket_id}`).text('술래에게 잡혔습니다!');
+    $('.players_range').filter(`#${socket_id}`).attr('disabled', true);
+  }
+  else if (reason === 'mouse_up'){
+    $('.players_result').filter(`#${socket_id}`).text('마우스에서 손을 뗐습니다!');
+    $('.players_range').filter(`#${socket_id}`).attr('disabled', true);
+  }
+})
