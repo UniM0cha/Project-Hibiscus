@@ -160,38 +160,29 @@ module.exports = function (server) {
 
       if (command === 'range') {
         let value = data.value;
-        let output = { command: 'range', value: value, user_info: user_info};
+        let output = { command: 'range', value: value, user_info: user_info };
         socket.broadcast.to(room_id).emit('game', output);
-      }
-
-      else if (command === 'failed'){
+      } else if (command === 'failed') {
         let reason = data.reason;
 
-        if (reason === 'over_speed'){
-          let output = {command: 'failed', reason: reason, user_info: user_info, room_info: room_info};
+        if (reason === 'over_speed') {
+          let output = { command: 'failed', reason: reason, user_info: user_info, room_info: room_info };
+          socket.broadcast.to(room_id).emit('game', output);
+          io.sockets.adapter.rooms.get(room_id).failed.push(user_id);
+        } else if (reason === 'captured') {
+          let output = { command: 'failed', reason: reason, user_info: user_info, room_info: room_info };
+          socket.broadcast.to(room_id).emit('game', output);
+          io.sockets.adapter.rooms.get(room_id).failed.push(user_id);
+        } else if (reason === 'mouse_up') {
+          let output = { command: 'failed', reason: reason, user_info: user_info, room_info: room_info };
           socket.broadcast.to(room_id).emit('game', output);
           io.sockets.adapter.rooms.get(room_id).failed.push(user_id);
         }
-
-        else if (reason === 'captured') {
-          let output = {command: 'failed', reason: reason, user_info: user_info, room_info: room_info};
-          socket.broadcast.to(room_id).emit('game', output);
-          io.sockets.adapter.rooms.get(room_id).failed.push(user_id);
-        }
-
-        else if (reason === 'mouse_up') {
-          let output = {command: 'failed', reason: reason, user_info: user_info, room_info: room_info};
-          socket.broadcast.to(room_id).emit('game', output);
-          io.sockets.adapter.rooms.get(room_id).failed.push(user_id);
-        }
-      }
-
-      else if (command === 'finished') {
-        let output = {command: 'finished', user_info: user_info, room_info: room_info};
+      } else if (command === 'finished') {
+        let output = { command: 'finished', user_info: user_info, room_info: room_info };
         socket.broadcast.to(room_id).emit('game', output);
         io.sockets.adapter.rooms.get(room_id).finished.push(user_id);
       }
-
     });
   });
 };
@@ -231,21 +222,21 @@ function generateRoomCode(rooms) {
 function disconnect(io, user_info, room_info) {
   let room_id = room_info.room_id;
   console.log(`${user_info.user_id}님이 접속을 종료했습니다.`);
-  
-  if (io.sockets.adapter.rooms.get(room_id)){
+
+  if (io.sockets.adapter.rooms.get(room_id)) {
     room_info.joined_player = io.sockets.adapter.rooms.get(room_id).size;
-    
-    if (user_info.is_ready === true){
+
+    if (user_info.is_ready === true) {
       io.sockets.adapter.rooms.get(room_id).ready--;
     }
 
     let output = { command: 'leave', user_info: user_info, room_info: room_info };
     console.log(output);
     io.to(room_id).emit('room_status', output);
-  
+
     // 게임중이라면 게임 실패 기능 구현
     if (io.sockets.adapter.rooms.get(room_id) && io.sockets.adapter.rooms.get(room_id).on_game) {
-      let output = {command: 'failed', reason: 'disconnect', user_info: user_info, room_info: room_info};
+      let output = { command: 'failed', reason: 'disconnect', user_info: user_info, room_info: room_info };
       io.to(room_id).emit('game', output);
     }
   }
@@ -299,7 +290,6 @@ function startGame(io, room_id) {
   // 3분 타이머 정의
   let time = game_time;
   timer_game = setInterval(() => {
-
     if (io.sockets.adapter.rooms.get(room_id)) {
       let output = { command: 'timer', time: time };
       io.to(room_id).emit('game', output);
@@ -325,8 +315,7 @@ function startGame(io, room_id) {
   }, 1000);
 }
 
-
-function endGame(io, room_id){
+function endGame(io, room_id) {
   clearInterval(timer_hibiscus);
   clearInterval(timer_game);
 
@@ -335,7 +324,7 @@ function endGame(io, room_id){
 
   console.log(finished, failed);
 
-  let output = { command: 'end', finished: finished, failed: failed}
-  
+  let output = { command: 'end', finished: finished, failed: failed };
+
   io.to(room_id).emit('game', output);
 }
