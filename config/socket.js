@@ -2,7 +2,7 @@ module.exports = function (server) {
   const io = require('socket.io')(server);
 
   // 방 최대 참여자 수
-  const max_player = 10;
+  const max_player = 3;
   let rooms = io.sockets.adapter.rooms;
 
   // 소켓이 연결 되면
@@ -88,6 +88,8 @@ function createRoom(io, socket, rooms, roomModel) {
   // 각 방 객체에 user_id 배열 추가, 방장 user_id 추가
   rooms.get(room_id).user_id = [];
   rooms.get(room_id).user_id.push(roomModel.user_id);
+  rooms.get(room_id).finished_player = [];
+  rooms.get(room_id).failed_player = [];
   console.log(rooms.get(room_id));
 
   // 조인 성공 이벤트 전송
@@ -163,7 +165,12 @@ function roomLeave(io, socket, rooms, roomModel) {
   if (rooms.get(roomModel.room_id)) {
     roomModel.joined_player = rooms.get(roomModel.room_id).size;
     // 방에 있는 모두에게 나 나간다고 알린다
-    io.to(roomModel.room_id).emit('leave_room', roomModel);
+    data = {
+      socket_id: socket.id,
+      roomModel: roomModel,
+    }
+    io.to(roomModel.room_id).emit('leave_room', data);
+    rooms.get(roomModel.room_id).failed_player.push(roomModel.user_id);
   }
 }
 
@@ -210,10 +217,20 @@ function startGameTimer(io, socket, rooms, roomModel) {
     if (rooms.get(roomModel.room_id)) {
       io.to(roomModel.room_id).emit('game_timer', timer);
       console.log(`${roomModel.room_id}번 방 : 게임시간 ${timer}초 남음`);
+
+      let finished_player = rooms.get(roomModel.room_id).finished_player;
+      let failed_player = rooms.get(roomModel.room_id).failed_player;
+      let size = finished_player.length + failed_player.length
+      console.log(size, roomModel.max_player);
+      if (size === roomModel.max_player){
+        gameEnd(io, socket, rooms, roomModel, timerId);
+      }
+
       timer--;
       if (timer === -1) {
-        clearInterval(timerId);
+        // clearInterval(timerId);
         // 여기다 타이머 끝나면 할 작동 기술
+        gameEnd(io, socket, rooms, roomModel, timerId);
       }
     } else {
       // 방이 사라질 경우 타이머 삭제해야함
@@ -276,7 +293,7 @@ function mouseUp(io, socket, rooms, roomModel) {
 
 function finish(io, socket, rooms, roomModel) {
   console.log(`${roomModel.room_id}번 방 : ${roomModel.user_id}님이 결승선을 통과했습니다!`);
-  rooms.get(roomModel.room_id).finished_player = [];
+  rooms.get(roomModel.room_id).finished_player.push(roomModel.user_id);
   
 }
 
@@ -288,23 +305,25 @@ function gameFailed(io, socket, rooms, roomModel, reason) {
   console.log(reason, socket.id, roomModel.room_id);
   socket.broadcast.to(roomModel.room_id).emit('other_game_failed', data);
 
-  rooms.get(roomModel.room_id).failed_player = [];
+  rooms.get(roomModel.room_id).failed_player.push(roomModel.user_id);
 }
 
 
 
-function gameEnd(io, socket, rooms, roomModel) {
-  /*
-  게임이 종료됐을 때 -> 게임 결과 창으로 이동...
-  얘를 또다른 페이지로 만들었을 때?
-  페이지 이동은.............. 클라이언트에게 정보를 전달했을때 location.href로 이동....인데.......
-  그렇게 되면 소켓 연결이 끊어질테고
-  게임을 완료한 사람들의 리스트를 어떻게 갖고오지?
+function gameEnd(io, socket, rooms, roomModel, timerId) {
+  // 타이머가 종료되었을 때 호출됨
+  // 게임을 플레이중인 사람이 없을 때 호출됨
+    // 모두 탈락 or 성공 or 나감
+  clearInterval(timerId);
+  let finished_player = rooms.get(roomModel.room_id).finished_player;
+  let failed_player = rooms.get(roomModel.room_id).failed_player;
 
-  리스트를 다른곳에...... 등록.....할 수 있나?
-  어떻게?
-  어떻게 하지?
-  get?
+  console.log(finished_player, failed_player);
+
+  data = {
+    finished_player: finished_player,
+    failed_player: failed_player,
+  }
   
-  */
+  io.to(roomModel.room_id).emit('game_end', data);
 }

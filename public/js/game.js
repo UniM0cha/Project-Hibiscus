@@ -3,6 +3,8 @@ const search = location.search;
 const params = new URLSearchParams(search);
 const user_id = params.get('user_id');
 let room_id = null;
+// 게임을 시작했는지 판단할 플래그 변수
+let isOnGame = false;
 console.log('User ID :', user_id);
 
 const socket = io();
@@ -32,8 +34,12 @@ function create_room() {
 
   // 방 나감
   socket.on('leave_room', (data) => {
-    $('#joined_player').text(data.joined_player);
-    $('#max_player').text(data.max_player);
+    $('#joined_player').text(data.roomModel.joined_player);
+    $('#max_player').text(data.roomModel.max_player);
+    if(isOnGame === true) {
+      $('.players_result').filter(`#${data.socket_id}`).text('게임을 나갔습니다!');
+      $('.players_range').filter(`#${data.socket_id}`).attr('disabled', true);
+    }
   });
 }
 
@@ -119,6 +125,7 @@ socket.on('start_game', (data) => {
 let hibiscus = false;
 
 function game() {
+  isOnGame = true;
   let currentValue = 0;
   let previousValue = 0;
   let speed = 0;
@@ -158,7 +165,7 @@ function game() {
     console.log('range 누름');
     $('#range').on('mouseup', (e) => {
       console.log('range 뗌');
-      mouseUp(rangeChecker);
+      mouseUp(rangeChecker, currentValue);
     });
   });
 }
@@ -273,7 +280,7 @@ function finish(timerId1, timerId2) {
     user_id: user_id,
     room_id: room_id,
   };
-  socket.emit('client_info', data);
+  // socket.emit('client_info', data);
   socket.emit('finish');
   clearInterval(timerId1);
   clearInterval(timerId2);
@@ -288,7 +295,7 @@ function gameFailed(timerId1, timerId2, reason) {
     room_id: room_id,
   };
 
-  socket.emit('client_info', data);
+  // socket.emit('client_info', data);
   socket.emit('game_failed', reason);
   clearInterval(timerId1);
   clearInterval(timerId2);
@@ -312,4 +319,9 @@ socket.on('other_game_failed', (data) => {
     $('.players_result').filter(`#${socket_id}`).text('마우스에서 손을 뗐습니다!');
     $('.players_range').filter(`#${socket_id}`).attr('disabled', true);
   }
+})
+
+socket.on('game_end', (data) => {
+  console.log('게임이 끝났습니다.');
+  
 })
