@@ -6,6 +6,7 @@
     <!-- soket.io -->
     <script src="/socket.io/socket.io.js"></script>
     <script src="js/game.js"></script>
+    <link rel="stylesheet" href="./css/main2.css">
 
 </head>
 
@@ -13,23 +14,19 @@
 
 
 <body>
-
+<div id="inBox">
   <!-- 방을 참가하는 과정에 보여줄 화면 -->
   <div class="ready_game">
-    
-    <div class="welcome">
-      <h1><label id="nickname"></label>님 환영합니다!</h1>
-    </div>
-
+      <center>
+      <h1 class="input1">무궁화 꽃이 피었습니다</h1>
+      </center>
     <% if(mode==='create_room' ) { %>
       <!-- 방만들기를 클릭할 때 표시될 화면 -->
-
     <script>
       $(() => {
         create_room();
       })
     </script>
-
     <% } else if(mode==='join_room' ) { %>
       <!-- 참여하기를 클릭할 때 표시될 화면 -->
     <script>
@@ -37,44 +34,80 @@
         search_room();
       })
     </script>
-
     <div class="before_join">
-      <h2>방 번호를 입력해주세요</h2>
+      <h1 class="padd">방 번호를 입력해주세요</h1>
+      &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
       <input type="number" id="input_room_id" placeholder="방 번호 입력" required>
-      <input type="submit" id="btn_join_room" value="참여하기">
+      &nbsp<input type="submit" id="btn_join_room" value="GO">
       <br>
-      <label id="error_message" hidden"></label>
+      <label id="error_message" hidden></label>
     </div>
-
     <% } %>
-
     <div class="lobby" hidden>
-      <h1 id="status">참가자를 대기중입니다...</h1>
-      <h2>방 번호 : <label id="room_id"></label></h2>
-      <h2>대기자 : <label id="joined_player"></label> / <label id="max_player"></label></h2>
-      <input id="ready_game_button" type="button" value="준비 완료" disabled>
+      <div class="welcome">
+        <h1 class="padd"><label id="nickname" style="color: white;"></label>님 환영합니다!</h1>
+      </div>
+      <h3 id="status">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp참가자를 대기중입니다...</h3>
+      <h2 class="padd">방 번호 : <label id="room_id" style="color: white;"></label></h2>
+      <h2 class="padd">대기자 : <label id="joined_player" style="color: white;"></label> / <label id="max_player"></label></h2>
+      <input id="ready_game_button" type="button" value="입장" disabled>
     </div>
-
+    <!-- 설명하는 코드임 -->
+    <div class="right">
+      <div class="explain" style="color: white;" font="bold;"><h3>게임 설명</h3><p>
+      1.&nbsp볼륨 조절키를 계속 누르면서 앞으로 나아갑니다.<p>
+      2.&nbsp‘무궁화 꽃이 피었습니다’라는 문구가 다 나오게 되면 볼륨 조절키에서 마우스를  떼야합니다.<p>
+      3.&nbsp다시 글씨가 나오게 되면 볼륨 조절키에 마우스를 클릭하여 앞으로 나가갑니다.<p>
+      4.&nbsp결승점까지 도달하게 되면 승리!<p></div>
+    </div>
   </div>
-
   <!-- 게임 시작할 때 보여줄 화면 -->
+  <div id="abcd">
   <div class="start_game" hidden>
-    <h1 id="timer">남은시간 : </h1>
+    <center>
+    <h1 id="timer" style="color: white;">남은시간 : </h1>
     <div style="height: 50px; margin: 20px;">
       <h1 id="hibiscus"></h1>
     </div>
-    <input type="range" id="range" min="0" max="10000" value="0" step="1" style="width: 100%;">
-    <h2>현재 속도 : <label id="speed">0</label></h2>
+  </center>
+  <br><br>
+    <input type="range" id="range" min="0" max="10000" value="0" step="1" style="width: 99%; height: 40px;">
+    <h2 style="color: white;">현재 속도 : <label id="speed" style="color: rgba(242, 255, 94, 0.8);">0</label></h2>
     <h1 id="result"></h1>
   </div>
-
   <div id="other_player">
-
   </div>
-
+  <!-- 결과 보기 누르면 창이 뜸-->
+  <div class="result" hidden>
+  <button id="show">결과보기</button>
+    <div class="background">
+      <div class="window">
+        <!-- 팝업창이 뜨면서 메인화면으로 돌아갈 수 있음-->
+        <div class="popup">
+          <label class="first111"><center>1등</center></label>
+          <label class="second"><center>2등</center></label>
+          <label class="three"><center>3등</center></label>
+          <button id="close" onclick="location.href='http://localhost:3000/main'">메인으로</button>
+        </div>
+        <div>
+          <div></div>
+        </div>
+      </div>
+    </div>
   </div>
+    <script>
+      function show() {
+        document.querySelector(".background").className = "background show";
+      }
 
+      function close() {
+        document.querySelector(".background").className = "background";
+      }
 
+      document.querySelector("#show").addEventListener("click", show);
+      document.querySelector("#close").addEventListener("click", close);
+    </script>
+</div>
+</div>
 </body>
-
 </html>

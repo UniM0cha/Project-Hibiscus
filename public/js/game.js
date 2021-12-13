@@ -49,6 +49,7 @@ function search_room() {
 
   // 참여하기 버튼 클릭
   $('#btn_join_room').click(() => {
+    
     room_id = $('#input_room_id').val();
     if (room_id !== '') {
       console.log(`${room_id}번 방에 접속을 시도합니다.`);
@@ -60,18 +61,18 @@ function search_room() {
       socket.emit('client_info', data);
       socket.emit('join_room');
     } else {
-      $('#error_message').show().text('방 번호를 입력해주세요');
+      $('#error_message').show().text('\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0방 번호를 입력해주세요');
     }
   });
 
   socket.on('join_noroom', () => {
     console.log('방 찾지 못함');
-    $('#error_message').show().text('해당 방이 없습니다! 번호를 다시 확인해주세요');
+    $('#error_message').show().text('\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0해당 방이 없습니다! 번호를 다시 확인해주세요');
   });
 
   socket.on('join_full', () => {
     console.log('방 찾지 못함');
-    $('#error_message').show().text('해당 방이 가득 찼습니다!');
+    $('#error_message').show().text('\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0해당 방이 가득 찼습니다!');
   });
 
   // 방의 정보 받아옴
@@ -95,18 +96,18 @@ function search_room() {
 // 참여자가 모두 들어왔을 때
 socket.on('ready_game', () => {
   $('#ready_game_button').attr('disabled', false);
-  $('#status').text('참가자가 모두 들어왔습니다. 준비 완료 버튼을 눌러주세요!');
+  $('#status').text('\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0참가자가 모두 들어왔습니다. 입장 버튼을 눌러주세요!');
 
   $('#ready_game_button').click(() => {
     console.log('준비버튼 클릭');
-    $('#ready_game_button').attr('disabled', true).val('준비 완료됨');
+    $('#ready_game_button').attr('disabled', true).val('준비 완료');
 
     socket.emit('ready_pressed');
   });
 });
 
 socket.on('count_down', (timer) => {
-  $('#status').text(`준비가 완료되었습니다. 3초후에 게임을 시작합니다... ${timer}`);
+  $('#status').text(`\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0준비가 완료되었습니다. 3초후에 게임을 시작합니다... ${timer}`);
 });
 
 // 모두 준비 완료를 눌렀을 때
@@ -114,6 +115,9 @@ socket.on('start_game', (data) => {
   $('.lobby').hide();
   $('.welcome').hide();
   $('.start_game').show();
+  $('.explain').hide();
+  $('.input1').hide();
+  $('.result').show();
 
   generateOtherPlayer(data);
   game();
@@ -323,5 +327,4 @@ socket.on('other_game_failed', (data) => {
 
 socket.on('game_end', (data) => {
   console.log('게임이 끝났습니다.');
-  
 })
