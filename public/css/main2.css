@@ -1,0 +1,58 @@
+body {
+  position: absolute;
+  width: 1200px;
+  height: 900px;
+  left: calc(50% - 1200px/2);
+  top: calc(50% - 900px/2 + 0.5px);
+  background-image:url('/images/좋은거.gif');
+  background-repeat : no-repeat;
+  background-size : cover;
+  mix-blend-mode: normal;
+}
+#inBox {
+ position: absolute;
+ width: 1300px;
+ height: 750px;
+ top: calc(50% - 750px/2 + 0.5px);
+ background: rgba(0, 0, 0, 0.7);
+ mix-blend-mode: normal;
+ border-radius: 10px;
+}
+.input1 {
+ width: 690px;
+ height: 65px;
+ font-family: SeoulHangang;
+ font-style: normal;
+ font-weight: normal;
+ font-size: 64px;
+ line-height: 64px;
+ /* identical to box height */
+ color: rgba(242, 255, 94, 0.8);
+ mix-blend-mode: normal;
+}
+.input3 {
+ position: absolute;
+ width: 120px;
+ height: 30px;
+ left: calc(50% - 99px/2 + 420px);
+ top: calc(50% - 30px/2 + 282.5px);
+ font-family: SeoulHangang;
+ font-style: normal;
+ font-weight: normal;
+ font-size: 24px;
+ line-height: 24px;
+ color: #000000;
+ mix-blend-mode: normal;
+}
+.before_game{
+ width: 45%;
+ float: left;
+ color: rgba(242, 255, 94, 0.8);
+ font-family: SeoulHangang;
+}
+.right{
+ width: 55%;
+ float: right;
+ color: rgba(242, 255, 94, 0.8);
+ font-family: SeoulHangang;
+}
