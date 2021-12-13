@@ -244,7 +244,7 @@ function disconnect(io, user_info, room_info) {
     io.to(room_id).emit('room_status', output);
   
     // 게임중이라면 게임 실패 기능 구현
-    if (io.sockets.adapter.rooms.get(room_id).on_game) {
+    if (io.sockets.adapter.rooms.get(room_id) && io.sockets.adapter.rooms.get(room_id).on_game) {
       let output = {command: 'failed', reason: 'disconnect', user_info: user_info, room_info: room_info};
       io.to(room_id).emit('game', output);
     }

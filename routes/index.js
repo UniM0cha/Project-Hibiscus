@@ -20,10 +20,10 @@ router.get('/:mode', (req, res) => {
 });
 
 router.post('/result', (req, res) => {
-  console.log(req.body);
+  let output = JSON.parse(req.body.output);
   res.render('result', {
-    finished: 'hello',
-    failed: req.body.failed_player,
+    finished: output.finished,
+    failed: output.failed,
   })
 })
 

@@ -320,7 +320,18 @@ function gameFinished() {
 }
 
 function endGame(data){
-  let finished = data.finished;
-  let failed = data.failed;
-  console.log(finished, failed);
+  console.log(data);
+  let output = JSON.stringify(data);
+
+  let form = document.createElement('form');
+  let input = document.createElement('input');
+  input.setAttribute('type', 'hidden');
+  input.setAttribute('name', 'output');
+  input.setAttribute('value', output);
+
+  form.appendChild(input);
+  form.setAttribute('method', 'post');
+  form.setAttribute('action', '/result')
+  document.body.appendChild(form);
+  form.submit();
 }
