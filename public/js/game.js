@@ -4,6 +4,7 @@ const params = new URLSearchParams(search);
 const user_id = params.get('user_id');
 let room_id = null;
 let on_game = false;
+let hibiscus = false;
 console.log('User ID :', user_id);
 
 const socket = io();
@@ -20,8 +21,8 @@ function create_room() {
 function search_room() {
   $('#nickname').text(user_id);
 
-  let user_info = { user_id: user_id };
-  socket.emit('room', { command: 'enter', user_info: user_info });
+  // let user_info = { user_id: user_id };
+  // socket.emit('room', { command: 'enter', user_info: user_info });
 
   $('#btn_join_room').click(() => {
     room_id = $('#input_room_id').val();
@@ -31,7 +32,7 @@ function search_room() {
     } else {
       console.log(`${room_id}번 방에 접속을 시도합니다.`);
 
-      let user_info = { user_id: user_id };
+      let user_info = { user_id: user_id, is_ready: false };
       let room_info = { room_id: room_id };
       let output = { command: 'join', user_info: user_info, room_info: room_info };
       socket.emit('room', output);
@@ -57,11 +58,7 @@ socket.on('room_status', (data) => {
   else if (command === 'leave') {
     $('#joined_player').text(data.room_info.joined_player);
     $('#max_player').text(data.room_info.max_player);
-
-    // if(on_game === true) {
-    //   $('.players_result').filter(`#${data.socket_id}`).text('게임을 나갔습니다!');
-    //   $('.players_range').filter(`#${data.socket_id}`).attr('disabled', true);
-    // }
+    $('#status').text('참가자를 대기중입니다...');
   }
   
   // 방 가득 참
@@ -86,15 +83,17 @@ socket.on('room_status', (data) => {
   }
 });
 
-$('#ready_game_button').click(() => {
-  console.log('준비버튼 클릭');
-  $('#ready_game_button').attr('disabled', true).val('준비 완료됨');
-
-  let user_info = { user_id: user_id };
-  let room_info = { room_id: room_id };
-  let output = { command: 'ready', user_info: user_info, room_info: room_info };
-  socket.emit('room', output);
-});
+$(() => {
+  $('#ready_game_button').click(() => {
+    console.log('준비버튼 클릭');
+    $('#ready_game_button').attr('disabled', true).val('준비 완료됨');
+    
+    let user_info = { user_id: user_id, is_ready: true };
+    let room_info = { room_id: room_id };
+    let output = { command: 'ready', user_info: user_info, room_info: room_info };
+    socket.emit('room', output);
+  });
+})
 
 socket.on('game', (data) => {
   let command = data.command;
@@ -108,8 +107,78 @@ socket.on('game', (data) => {
     startGame(data);
   }
   
-  
+  // 무궁화 꽃이 피었습니다 관련
+  else if (command === 'hibiscus'){
+    let type = data.type;
+
+    if (type === 'text'){
+      let text = data.text;
+      let combText = $('#hibiscus').text() + text;
+      $('#hibiscus').text(combText);
+    }
+    
+    else if (type === 'watch') {
+      hibiscus = true;
+    }
+
+    else if (type === 'restart') {
+      hibiscus = false;
+      $('#hibiscus').text('');
+    }
+  }
+
+  // 타이머
+  else if (command === 'timer'){
+    let time = data.time;
+    let minutes = Math.floor(time / 60);
+    let seconds = time % 60;
+    let timer_text = `남은시간 : ${minutes}분 ${seconds}초`;
+    $('#timer').text(timer_text);
+  }
+
+  else if (command === 'range') {
+    let value = data.value;
+    let socket_id = data.user_info.socket_id;
+    $(`#${socket_id}`).filter('.players_range').val(value);
+  }
+
+  else if (command === 'failed'){
+    let reason = data.reason;
+    let socket_id = data.user_info.socket_id;
+
+    if (reason === 'over_speed'){
+      $('.players_result').filter(`#${socket_id}`).text('과속했습니다!');
+      $('.players_range').filter(`#${socket_id}`).attr('disabled', true);
+    }
+
+    else if (reason === 'captured') {
+      $('.players_result').filter(`#${socket_id}`).text('술래에게 잡혔습니다!');
+      $('.players_range').filter(`#${socket_id}`).attr('disabled', true);
+    }
+
+    else if (reason === 'mouse_up') {
+      $('.players_result').filter(`#${socket_id}`).text('마우스에서 손을 뗐습니다!');
+      $('.players_range').filter(`#${socket_id}`).attr('disabled', true);
+    }
+
+    else if (reason === 'disconnect') {
+      $('.players_result').filter(`#${socket_id}`).text('연결이 끊어졌습니다!');
+      $('.players_range').filter(`#${socket_id}`).attr('disabled', true);
+    }
+  }
+
+  else if (command === 'finished') {
+    let socket_id = data.user_info.socket_id;
+    $('.players_result').filter(`#${socket_id}`).text('완주했습니다!!');
+    $('.players_range').filter(`#${socket_id}`).attr('disabled', true);
+  }
+
+  else if (command === 'end') {
+    endGame(data);
+  }
 });
+
+
 
 let timer_range_checker = null;
 let timer_send_range = null;
@@ -134,7 +203,7 @@ function startGame(data){
     $('#speed').text(speed);
 
     // 과속 감지
-    if (Math.abs(speed) >= 100) {
+    if (Math.abs(speed) >= 10000) {
       gameFailed('over_speed')
     }
 
@@ -153,15 +222,17 @@ function startGame(data){
 
   timer_send_range = setInterval(() => {
     current_value = $('#range').val();
-    let output = { command: 'range', value: current_value };
+    let user_info = {user_id: user_id};
+    let room_info = {room_id: room_id};
+    let output = { command: 'range', value: current_value, user_info: user_info, room_info: room_info };
     socket.emit('game', output);
   }, 1000);
 
   // 마우스 뗌 감지
   $('#range').on('mousedown', (e) => {
-    console.log('range 누름');
+    console.log('마우스 누름');
     $('#range').on('mouseup', (e) => {
-      console.log('range 뗌');
+      console.log('마우스 뗌');
       gameFailed('mouse_up');
     });
   });
@@ -211,284 +282,45 @@ function generateOtherPlayer(user_ids, socket_ids) {
   input.appendChild(container);
 }
 
-// socket.on('to_client_range', (data) => {
-//   let socket_id = data.socket_id;
-//   let value = data.value;
-//   console.log(`value값 가져옴 ${value}`);
-
-//   $(`#${socket_id}`).filter('.players_range').val(value);
-// });
-
-// // 타이머
-// socket.on('game_timer', (timer) => {
-//   let minutes = Math.floor(timer / 60);
-//   let seconds = timer % 60;
-//   let timer_text = `남은시간 : ${minutes}분 ${seconds}초`;
-//   $('#timer').text(timer_text);
-// });
-
-// // 무궁화 꽃이 피었습니다 텍스트 수신
-// socket.on('hibiscus_text', (text) => {
-//   let combText = $('#hibiscus').text() + text;
-//   $('#hibiscus').text(combText);
-// });
-
-// // 무궁화 꽃이 피었습니다 초기화
-// socket.on('hibiscus_restart', () => {
-//   hibiscus = false;
-//   $('#hibiscus').text('');
-//   console.log('다시 시작');
-// });
-
-// socket.on('hibiscus_watch', () => {
-//   hibiscus = true;
-// });
-
-/*
-
-// 참여자가 모두 들어왔을 때
-socket.on('ready_game', () => {
-  $('#ready_game_button').attr('disabled', false);
-  $('#status').text('참가자가 모두 들어왔습니다. 준비 완료 버튼을 눌러주세요!');
-
-  $('#ready_game_button').click(() => {
-    console.log('준비버튼 클릭');
-    $('#ready_game_button').attr('disabled', true).val('준비 완료됨');
-
-    socket.emit('ready_pressed');
-  });
-});
-
-socket.on('count_down', (timer) => {
-  $('#status').text(`준비가 완료되었습니다. 3초후에 게임을 시작합니다... ${timer}`);
-});
-
-// 모두 준비 완료를 눌렀을 때
-socket.on('start_game', (data) => {
-  $('.lobby').hide();
-  $('.welcome').hide();
-  $('.start_game').show();
-
-  generateOtherPlayer(data);
-  game();
-});
-
-/////////////////////////////////////////////
-///////////  게임 관련 함수들 ///////////////
-/////////////////////////////////////////////
-let hibiscus = false;
-
-function game() {
-  isOnGame = true;
-  let currentValue = 0;
-  let previousValue = 0;
-  let speed = 0;
-
-  // range의 상태를 확인할 타이머 등록
-  let rangeChecker = setInterval(() => {
-    currentValue = $('#range').val();
-    console.log(currentValue);
-    speed = currentValue - previousValue;
-    $('#speed').text(speed);
-
-    // 과속 감지
-    if (Math.abs(speed) >= 100) {
-      overSpeed(rangeChecker, sendRangeValueTimer);
-    }
-
-    // 무궁화 꽃이 피었습니다 일때 움직임 감지
-    else if (hibiscus === true && Math.abs(speed) > 0) {
-      captured(rangeChecker, sendRangeValueTimer);
-    }
-
-    // 결승선 도달
-    else if (currentValue === '10000') {
-      finish(rangeChecker, sendRangeValueTimer);
-    }
-
-    previousValue = currentValue;
-  }, 100);
-
-  let sendRangeValueTimer = setInterval(() => {
-    currentValue = $('#range').val();
-    socket.emit('to_server_range', currentValue);
-  }, 1000);
-
-  // 마우스 뗌 감지
-  $('#range').on('mousedown', (e) => {
-    console.log('range 누름');
-    $('#range').on('mouseup', (e) => {
-      console.log('range 뗌');
-      mouseUp(rangeChecker, currentValue);
-    });
-  });
-}
-
-// 다른 플레이어들 표시하는 함수
-function generateOtherPlayer(data) {
-  let socket_ids = data.socket_ids;
-  let user_ids = data.user_ids;
-  console.log(socket_ids);
-  console.log(user_ids);
-
-  let container = document.createElement('div');
-  container.className = 'players_grid_container';
-
-  for (let i = 0; i < socket_ids.length; i++) {
-    // 자신 제외
-    if (socket_ids[i] === socket.id) {
-      continue;
-    }
-
-    let item = document.createElement('div');
-    item.className = 'players_grid_item';
-
-    let nickname = document.createElement('h3');
-    nickname.className = 'players_name';
-    nickname.innerHTML = user_ids[i];
-
-    let range = document.createElement('input');
-    range.type = 'range';
-    range.className = 'players_range';
-    range.id = socket_ids[i];
-    range.value = 0;
-    range.min = 0;
-    range.max = 10000;
-    range.step = 1;
-
-    let result = document.createElement('h3');
-    result.className = 'players_result';
-    result.id = socket_ids[i];
-
-    item.appendChild(nickname);
-    item.appendChild(range);
-    item.appendChild(result);
-    container.appendChild(item);
-  }
-
-  let input = document.getElementById('other_player');
-  input.appendChild(container);
-}
-
-socket.on('to_client_range', (data) => {
-  let socket_id = data.socket_id;
-  let value = data.value;
-  console.log(`value값 가져옴 ${value}`);
-
-  $(`#${socket_id}`).filter('.players_range').val(value);
-});
-
-// 타이머
-socket.on('game_timer', (timer) => {
-  let minutes = Math.floor(timer / 60);
-  let seconds = timer % 60;
-  let timer_text = `남은시간 : ${minutes}분 ${seconds}초`;
-  $('#timer').text(timer_text);
-});
-
-// 무궁화 꽃이 피었습니다 텍스트 수신
-socket.on('hibiscus_text', (text) => {
-  let combText = $('#hibiscus').text() + text;
-  $('#hibiscus').text(combText);
-});
-
-// 무궁화 꽃이 피었습니다 초기화
-socket.on('hibiscus_restart', () => {
-  hibiscus = false;
-  $('#hibiscus').text('');
-  console.log('다시 시작');
-});
-
-socket.on('hibiscus_watch', () => {
-  hibiscus = true;
-});
-
-////// 탈락 이벤트 함수들.... 통합 가능하겠는데? ///////
-function overSpeed(timerId1, timerId2) {
-  console.log('과속했습니다!');
-  $('#result').text('과속했습니다!');
-
-  let reason = 'over_speed';
-  gameFailed(timerId1, timerId2, reason);
-}
-
-function captured(timerId1, timerId2) {
-  console.log('술래에게 잡혔습니다!');
-  $('#result').text('술래에게 잡혔습니다!');
-
-  let reason = 'captured';
-  gameFailed(timerId1, timerId2, reason);
-}
-
-function mouseUp(timerId1, timerId2) {
-  console.log('마우스에서 손을 뗐습니다!');
-  $('#result').text('마우스에서 손을 뗐습니다!');
-
-  let reason = 'mouse_up';
-  gameFailed(timerId1, timerId2, reason);
-}
-
-// 통과 함수
-function finish(timerId1, timerId2) {
-  let data = {
-    user_id: user_id,
-    room_id: room_id,
-  };
-  // socket.emit('client_info', data);
-  socket.emit('finish');
-  clearInterval(timerId1);
-  clearInterval(timerId2);
-}
-
-// 게임에 탈락했을 때 서버에게 이유를 보낼 함수
-function gameFailed(timerId1, timerId2, reason) {
+function gameFailed(reason) {
+  let user_info = {user_id: user_id};
+  let room_info = {room_id: room_id};
   $('#range').attr('disabled', true);
 
-  let data = {
-    user_id: user_id,
-    room_id: room_id,
-  };
+  if (reason === 'over_speed'){
+    $('#result').text('과속했습니다!');
+  }
 
-  // socket.emit('client_info', data);
-  socket.emit('game_failed', reason);
-  clearInterval(timerId1);
-  clearInterval(timerId2);
+  else if (reason === 'captured') {
+    $('#result').text('술래에게 잡혔습니다!');
+  }
+
+  else if (reason === 'mouse_up') {
+    $('#result').text('마우스에서 손을 뗐습니다!');
+  }
+  
+
+  let output = {command: 'failed', reason: reason, user_info: user_info, room_info: room_info};
+  socket.emit('game', output);
+
+  clearInterval(timer_range_checker);
+  clearInterval(timer_send_range);
 }
 
-socket.on('other_game_failed', (data) => {
-  let reason = data.reason;
-  let socket_id = data.socket_id;
+function gameFinished() {
+  $('#result').text('완주했습니다!!');
+  $('#range').attr('disabled', true);
+  let user_info = {user_id: user_id};
+  let room_info = {room_id: room_id};
+  let output = {command: 'finished', user_info: user_info, room_info: room_info};
+  socket.emit('game', output);
 
-  console.log(reason, socket_id);
+  clearInterval(timer_range_checker);
+  clearInterval(timer_send_range);
+}
 
-  if (reason === 'over_speed'){
-    $('.players_result').filter(`#${socket_id}`).text('과속했습니다!');
-    $('.players_range').filter(`#${socket_id}`).attr('disabled', true);
-  }
-  else if (reason === 'captured') {
-    $('.players_result').filter(`#${socket_id}`).text('술래에게 잡혔습니다!');
-    $('.players_range').filter(`#${socket_id}`).attr('disabled', true);
-  }
-  else if (reason === 'mouse_up'){
-    $('.players_result').filter(`#${socket_id}`).text('마우스에서 손을 뗐습니다!');
-    $('.players_range').filter(`#${socket_id}`).attr('disabled', true);
-  }
-})
-
-socket.on('game_end', (data) => {
-  console.log('게임이 끝났습니다.');
-
-  let form = document.createElement('form');
-  let input = document.createElement('input');
-  input.setAttribute('type', 'hidden');
-  input.setAttribute('name', 'userid');
-  input.setAttribute('value', data);
-
-  form.appendChild(input);
-  form.setAttribute('method', 'post');
-  form.setAttribute('action', '/result')
-  document.body.appendChild(form);
-  form.submit();
-})
-
-*/
+function endGame(data){
+  let finished = data.finished;
+  let failed = data.failed;
+  console.log(finished, failed);
+}
