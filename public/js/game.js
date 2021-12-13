@@ -36,6 +36,8 @@ function create_room() {
   socket.on('leave_room', (data) => {
     $('#joined_player').text(data.roomModel.joined_player);
     $('#max_player').text(data.roomModel.max_player);
+
+    // 게임중이라면 실패
     if(isOnGame === true) {
       $('.players_result').filter(`#${data.socket_id}`).text('게임을 나갔습니다!');
       $('.players_range').filter(`#${data.socket_id}`).attr('disabled', true);
@@ -327,4 +329,16 @@ socket.on('other_game_failed', (data) => {
 
 socket.on('game_end', (data) => {
   console.log('게임이 끝났습니다.');
+
+  let form = document.createElement('form');
+  let input = document.createElement('input');
+  input.setAttribute('type', 'hidden');
+  input.setAttribute('name', 'userid');
+  input.setAttribute('value', data);
+
+  form.appendChild(input);
+  form.setAttribute('method', 'post');
+  form.setAttribute('action', '/result')
+  document.body.appendChild(form);
+  form.submit();
 })
