@@ -1,6 +1,6 @@
 // 방 최대 참여자 수
 const max_player = 3;
-//
+// 타이머
 const game_time = 60 * 3;
 
 module.exports = function (server) {
@@ -325,8 +325,7 @@ function startGame(io, room_id) {
   }, 1000);
 }
 
-// endGame에 필요한 정보
-// room_id, io,
+
 function endGame(io, room_id){
   clearInterval(timer_hibiscus);
   clearInterval(timer_game);
