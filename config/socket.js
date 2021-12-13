@@ -90,6 +90,7 @@ function createRoom(io, socket, rooms, roomModel) {
   rooms.get(room_id).user_id.push(roomModel.user_id);
   rooms.get(room_id).finished_player = [];
   rooms.get(room_id).failed_player = [];
+  rooms.get(room_id).isOnGame = true;
   console.log(rooms.get(room_id));
 
   // 조인 성공 이벤트 전송
@@ -170,7 +171,11 @@ function roomLeave(io, socket, rooms, roomModel) {
       roomModel: roomModel,
     }
     io.to(roomModel.room_id).emit('leave_room', data);
-    rooms.get(roomModel.room_id).failed_player.push(roomModel.user_id);
+
+    // 게임중이라면 실패로 들어간다
+    if (rooms.get(roomModel.room_id) !== undefined && rooms.get(roomModel.room_id).isOnGame === true){
+      rooms.get(roomModel.room_id).failed_player.push(roomModel.user_id);
+    }
   }
 }
 

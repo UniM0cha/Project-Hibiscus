@@ -19,4 +19,12 @@ router.get('/:mode', (req, res) => {
   }
 });
 
+router.post('/result', (req, res) => {
+  console.log(req.body);
+  res.render('result', {
+    finished: 'hello',
+    failed: req.body.failed_player,
+  })
+})
+
 module.exports = router;
