@@ -3,103 +3,174 @@ module.exports = function (server) {
 
   // 방 최대 참여자 수
   const max_player = 3;
-  let rooms = io.sockets.adapter.rooms;
 
   // 소켓이 연결 되면
   io.on('connection', (socket) => {
     console.log(`클라이언트가 연결되었습니다. Socket ID : ${socket.id}`);
 
-    // 일반 소켓 연결해제
-    socket.on('disconnect', () => {
-      console.log(`클라이언트의 연결이 종료되었습니다. Socket ID : ${socket.id}`);
-    });
     // 소켓 에러
     socket.on('error', (error) => {
       console.error(error);
     });
 
-    socket.on('client_info', (data) => {
-      let roomModel = new RoomModel(data.user_id, data.room_id, null, max_player);
+    // 방 관련 소켓 이벤트들
+    socket.on('room', (data) => {
+      console.log(data);
 
-      // 방 만들기 요청 핸들러
-      socket.on('create_room', () => {
-        console.log(`방 만들기 요청`);
-        createRoom(io, socket, rooms, roomModel);
-      });
+      let command = data.command;
 
-      // 방에 참여 시도
-      socket.on('join_room', () => {
-        console.log(`${roomModel.room_id}번 방에 접속 요청`);
-        joinRoom(io, socket, rooms, roomModel);
-      });
+      let user_id = data.user_info.user_id;
+      let socket_id = socket.id;
+      let user_info = UserInfo(user_id, socket_id);
 
-      socket.on('ready_pressed', () => {
-        console.log('준비 버튼 클릭함');
-        readyPressed(io, socket, rooms, roomModel);
-      });
+      // create 요청
+      if (command === 'create') {
+        let room_id = generateRoomCode(io.sockets.adapter.rooms);
+        socket.join(room_id);
+        let joined_player = io.sockets.adapter.rooms.get(room_id).size;
+        let room_info = RoomInfo(room_id, joined_player, max_player);
 
-      // 게임관련 이벤트들 정의
-      socket.on('game_failed', (reason) => {
-        if (reason === 'over_speed') {
-          overSpeed(io, socket, rooms, roomModel);
-        } else if (reason === 'captured') {
-          captured(io, socket, rooms, roomModel);
-        } else if (reason === 'mouse_up') {
-          mouseUp(io, socket, rooms, roomModel);
+        let output = { command: 'success', user_info: user_info, room_info: room_info };
+        io.to(room_id).emit('room_status', output);
+
+        io.sockets.adapter.rooms.user_id = [];
+        io.sockets.adapter.rooms.user_id.push(user_id);
+        io.sockets.adapter.rooms.finished = [];
+        io.sockets.adapter.rooms.failed = [];
+        io.sockets.adapter.rooms.on_game = false;
+        io.sockets.adapter.rooms.ready = 0;
+
+        console.log('현재 방 상태 :');
+        console.log(io.sockets.adapter.rooms);
+
+        // 연결 해제
+        socket.on('disconnect', () => {
+          disconnect(io, user_info, room_info);
+        });
+      }
+
+      // enter 요청
+      else if (command === 'enter') {
+        let user_info = data.user_info;
+        socket.on('disconnect', () => {
+          console.log(`${user_info.user_id}님이 접속을 종료했습니다.`);
+        });
+      }
+
+      // join 요청
+      else if (command === 'join') {
+        let room_id = data.room_info.room_id;
+        let room_info = RoomInfo(room_id, null, max_player);
+
+        // 방이 존재하면
+        if (io.sockets.adapter.rooms.get(room_id)) {
+          let joined_player = io.sockets.adapter.rooms.get(room_id).size;
+
+          // 방이 가득 찼으면
+          if (joined_player === max_player) {
+            socket.emit('room_status', { command: 'full' });
+          }
+
+          // 방에 자리가 있으면
+          else {
+            socket.join(room_id);
+            joined_player = io.sockets.adapter.rooms.get(room_id).size;
+
+            io.sockets.adapter.rooms.user_id.push(user_id);
+
+            let room_info = RoomInfo(room_id, joined_player, max_player);
+            let output = { command: 'success', user_info: user_info, room_info: room_info };
+            io.to(room_id).emit('room_status', output);
+
+            // 모든 참가자가 들어왔으면
+            if (joined_player === max_player) {
+              console.log(`${room_id}번 방 : 참가자 모두 들어옴`);
+              let output = { command: 'all' };
+              io.to(room_id).emit('room_status', output);
+            }
+
+            socket.on('disconnect', () => {
+              disconnect(io, user_info, room_info);
+            });
+          }
         }
-      });
 
-      socket.on('to_server_range', (currentValue) => {
-        console.log('value값 가져옴');
-        data = {
-          socket_id: socket.id,
-          value: currentValue,
-        };
-        socket.broadcast.to(roomModel.room_id).emit('to_client_range', data);
-      });
+        // 방이 존재하지 않으면
+        else {
+          socket.emit('room_status', { command: 'no_room' });
+        }
+      }
 
-      socket.on('finish', () => {
-        finish(io, socket, rooms, roomModel);
-      });
+      // ready 요청
+      else if (command === 'ready') {
+        io.sockets.adapter.rooms.get(room_id).ready++;
+
+        // 모두 준비를 완료하면
+        if (io.sockets.adapter.rooms.get(room_id).ready === max_player) {
+          console.log(`${room_id}번 방 : 모두 준비가 완료되었습니다.`);
+          console.log(`${room_id}번 방 : 3초 후 게임을 시작합니다.`);
+
+          let time = 3;
+          let game_start_timer = setInterval(() => {
+            let output = {command: 'game_start_timer', time: time}
+            io.to(room_id).emit('room_status', output);
+            console.log(`${room_id}번 방 : ${time}초...`);
+            time--;
+
+            // 게임 시작
+            if (time === -1) {
+              clearInterval(game_start_timer);
+
+              let socket_ids = Array.from(io.sockets.adapter.rooms.get(room_id));
+              let user_ids = io.sockets.adapter.rooms.get(room_id).user_id;
+              console.log('클라이언트에게 보낼 플레이어 정보');
+              console.log(socket_ids);
+              console.log(user_ids);
+
+              let data = { command: 'start', socket_ids: socket_ids, user_ids: user_ids };
+              io.to(room_id).emit('game', data);
+
+              startGame();
+
+              // 게임 시작하면 두가지 타이머 돌아감
+              // 3분 게임시간을 잴 타이머 하나
+              // 무궁화 꽃이 피었습니다를 보낼 타이머 하나
+
+              // on_game도 true로 바꿔줘야함
+
+
+
+
+              // startGameTimer(io, socket, rooms, roomModel);
+              // startHibiscus(io, socket, rooms, roomModel);
+            }
+          }, 1000);
+        }
+      }
     });
+
+    // 게임 관련 소켓 이벤트들
+    socket.on('game', (data) => {
+
+    })
   });
 };
 
-function RoomModel(user_id, room_id, joined_player, max_player) {
-  this.user_id = user_id;
-  this.room_id = room_id;
-  this.joined_player = joined_player;
-  this.max_player = max_player;
+function UserInfo(user_id, socket_id) {
+  let data = {
+    user_id: user_id,
+    socket_id: socket_id,
+  };
+  return data;
 }
 
-function createRoom(io, socket, rooms, roomModel) {
-  // 생성된 방 번호를 저장할 변수
-  let room_id = generateRoomCode(rooms);
-
-  // 해당 room code에 참가
-  socket.join(room_id);
-  console.log(`${room_id}번 방을 생성했습니다.`);
-  console.log('현재 만들어진 방: \n', rooms);
-
-  // roomModel 매핑
-  roomModel.room_id = room_id;
-  roomModel.joined_player = rooms.get(room_id).size;
-
-  // 각 방 객체에 user_id 배열 추가, 방장 user_id 추가
-  rooms.get(room_id).user_id = [];
-  rooms.get(room_id).user_id.push(roomModel.user_id);
-  rooms.get(room_id).finished_player = [];
-  rooms.get(room_id).failed_player = [];
-  rooms.get(room_id).isOnGame = true;
-  console.log(rooms.get(room_id));
-
-  // 조인 성공 이벤트 전송
-  socket.emit('join_success', roomModel);
-
-  // 방을 나간다면
-  socket.on('disconnect', () => {
-    roomLeave(io, socket, rooms, roomModel);
-  });
+function RoomInfo(room_id, joined_player, max_player) {
+  let data = {
+    room_id: room_id,
+    joined_player: joined_player,
+    max_player: max_player,
+  };
+  return data;
 }
 
 function generateRoomCode(rooms) {
@@ -116,47 +187,23 @@ function generateRoomCode(rooms) {
   }
 }
 
-function joinRoom(io, socket, rooms, roomModel) {
-  // 방이 있다면
-  if (rooms.get(roomModel.room_id)) {
-    roomModel.joined_player = rooms.get(roomModel.room_id).size;
-
-    // 방이 가득 찼으면, 진입 불가
-    if (roomModel.joined_player === roomModel.max_player) {
-      console.log('해당 방이 가득 참');
-      socket.emit('join_full');
-    } else {
-      // 방에 자리 있으면
-
-      socket.join(roomModel.room_id);
-      console.log('방에 접속 성공');
-      roomModel.joined_player = rooms.get(roomModel.room_id).size;
-
-      // 각 방 user_id에 user_id 추가
-      rooms.get(roomModel.room_id).user_id.push(roomModel.user_id);
-      console.log(rooms.get(roomModel.room_id));
-
-      // 방에 있는 모두에게 나 왔다고 알린다
-      io.to(roomModel.room_id).emit('join_success', roomModel);
-
-      // 방이 가득 찼으면, 게임 준비
-      if (roomModel.joined_player === roomModel.max_player) {
-        console.log('모든 참여자 들어옴');
-        io.to(roomModel.room_id).emit('ready_game');
-        rooms.get(roomModel.room_id).ready = 0;
-        console.log(rooms);
-      }
-
-      // 방을 나간다면
-      socket.on('disconnect', () => {
-        roomLeave(io, socket, rooms, roomModel);
-      });
-    }
-  } else {
-    // 방이 없다면
-    socket.emit('join_noroom');
-  }
+function disconnect(io, user_info, room_info) {
+  console.log(`${user_info.user_id}님이 접속을 종료했습니다.`);
+  io.sockets.adapter.rooms.get(room_id).ready--;
+  let output = { command: 'leave', user_info: user_info, room_info: room_info };
+  io.to(room_info.room_id).emit('room_status', output);
 }
+
+let timer_game = null;
+let timer_hibiscus = null;
+
+function startGame() {
+  io.sockets.adapter.rooms.get(room_id).on_game = true;
+}
+
+/*
+
+
 
 function roomLeave(io, socket, rooms, roomModel) {
   console.log(`${roomModel.user_id}님이 방을 나갔습니다.`);
@@ -179,39 +226,6 @@ function roomLeave(io, socket, rooms, roomModel) {
   }
 }
 
-function readyPressed(io, socket, rooms, roomModel) {
-  rooms.get(roomModel.room_id).ready++;
-  console.log(rooms);
-  if (rooms.get(roomModel.room_id).ready === roomModel.max_player) {
-    console.log(`${roomModel.room_id}번 방 : 모두 준비가 완료되었습니다. 3초 후 게임을 시작합니다.`);
-
-    let timer = 3;
-    let timerId = setInterval(() => {
-      io.to(roomModel.room_id).emit('count_down', timer);
-      console.log(`${roomModel.room_id}번 방 : ${timer}초 후에 시작...`);
-      timer--;
-      if (timer === -1) {
-        // 게임 시작
-        clearInterval(timerId);
-
-        let socket_ids = Array.from(rooms.get(roomModel.room_id));
-        let user_ids = rooms.get(roomModel.room_id).user_id;
-        console.log(socket_ids);
-        console.log(user_ids);
-
-        let data = {
-          socket_ids: socket_ids,
-          user_ids: user_ids,
-        };
-
-        io.to(roomModel.room_id).emit('start_game', data);
-
-        startGameTimer(io, socket, rooms, roomModel);
-        startHibiscus(io, socket, rooms, roomModel);
-      }
-    }, 1000);
-  }
-}
 
 function startGameTimer(io, socket, rooms, roomModel) {
   const timerSeconds = 60 * 3; // 게임 시간 설정 : 3분
@@ -332,3 +346,5 @@ function gameEnd(io, socket, rooms, roomModel, timerId) {
   
   io.to(roomModel.room_id).emit('game_end', data);
 }
+
+*/
