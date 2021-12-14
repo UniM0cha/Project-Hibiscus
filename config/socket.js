@@ -186,7 +186,7 @@ module.exports = function (server) {
         io.sockets.adapter.rooms.get(room_id).finished.push(user_id);
       } else if (command === 'is_on_game') {
         let on_game = data.on_game;
-        if (on_game === true){
+        if (on_game === true) {
           io.sockets.adapter.rooms.get(room_id).failed.push(user_id);
         }
       }
@@ -303,8 +303,8 @@ function startGame(io, room_id) {
       // 타이머 끝
       if (time === -1) {
         endTimer(io, room_id);
-      } 
-      
+      }
+
       // 타이머 진행중
       else {
         let output = { command: 'timer', time: time };
@@ -320,7 +320,6 @@ function startGame(io, room_id) {
       if (size === max_player) {
         endGame(io, room_id);
       }
-
     } else {
       // 방이 사라질 경우 타이머 삭제해야함
       console.log(`${room_id}번 방이 사라졌습니다. 게임 타이머를 종료합니다.`);
@@ -331,8 +330,8 @@ function startGame(io, room_id) {
 
 // 타이머가 다 됐는데도 아직 플레이 중인 사람들을 체크한다
 // 필요한 정보 : room_id
-function endTimer(io, room_id){
-  io.to(room_id).emit('game', {command: 'is_on_game'});
+function endTimer(io, room_id) {
+  io.to(room_id).emit('game', { command: 'is_on_game' });
 }
 
 function endGame(io, room_id) {

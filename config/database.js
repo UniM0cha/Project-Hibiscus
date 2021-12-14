@@ -1,3 +1,9 @@
+/*
+###############################
+######## 사용하지 않음 ########
+###############################
+*/
+
 const mysql = require('mysql');
 const connection = mysql.createConnection({
   host: '112.151.4.252',

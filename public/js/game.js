@@ -54,7 +54,6 @@ socket.on('room_status', (data) => {
     $('#max_player').text(data.room_info.max_player);
     $('.before_join').hide();
     $('.lobby').show();
-    
   }
 
   // 다른 참여자 방 나감
@@ -165,8 +164,8 @@ socket.on('game', (data) => {
   } else if (command === 'is_on_game') {
     let user_info = { user_id: user_id };
     let room_info = { room_id: room_id };
-    if (on_game === true){
-      socket.emit('game', {command: 'is_on_game', on_game: true, user_info: user_info, room_info: room_info });
+    if (on_game === true) {
+      socket.emit('game', { command: 'is_on_game', on_game: true, user_info: user_info, room_info: room_info });
     }
   }
 });
@@ -310,17 +309,15 @@ function gameFinished() {
 
 function endGame(data) {
   console.log(data);
-  
-  
+
   // 통과한 사람과 실패한 사람의 리스트
   let finished = data.finished;
   let failed = data.failed;
   $('.result').show();
-  for(let i = 0; i<1; i++) {
+
   $('.first111').text(finished[0]);
   $('.second').text(finished[1]);
   $('.three').text(finished[2]);
-  }
 
   // let output = JSON.stringify(data);
   // let form = document.createElement('form');
