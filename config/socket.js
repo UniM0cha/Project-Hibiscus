@@ -1,8 +1,9 @@
 // 방 최대 참여자 수
-const max_player = 3;
+const max_player = 10;
+// const max_player = 3;
 // 타이머
-// const game_time = 60 * 3;
-const game_time = 3;
+const game_time = 60 * 3;
+// const game_time = 3;
 
 module.exports = function (server) {
   const io = require('socket.io')(server);
