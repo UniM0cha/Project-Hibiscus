@@ -162,6 +162,12 @@ socket.on('game', (data) => {
     $('.players_range').filter(`#${socket_id}`).attr('disabled', true);
   } else if (command === 'end') {
     endGame(data);
+  } else if (command === 'is_on_game') {
+    let user_info = { user_id: user_id };
+    let room_info = { room_id: room_id };
+    if (on_game === true){
+      socket.emit('game', {command: 'is_on_game', on_game: true, user_info: user_info, room_info: room_info });
+    }
   }
 });
 
@@ -271,6 +277,7 @@ function gameFailed(reason) {
   let user_info = { user_id: user_id };
   let room_info = { room_id: room_id };
   $('#range').attr('disabled', true);
+  on_game = false;
 
   if (reason === 'over_speed') {
     $('#result').text('과속했습니다!');
@@ -290,6 +297,8 @@ function gameFailed(reason) {
 function gameFinished() {
   $('#result').text('완주했습니다!!');
   $('#range').attr('disabled', true);
+  on_game = false;
+
   let user_info = { user_id: user_id };
   let room_info = { room_id: room_id };
   let output = { command: 'finished', user_info: user_info, room_info: room_info };

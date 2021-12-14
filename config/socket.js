@@ -1,7 +1,8 @@
 // 방 최대 참여자 수
 const max_player = 3;
 // 타이머
-const game_time = 60 * 3;
+// const game_time = 60 * 3;
+const game_time = 3;
 
 module.exports = function (server) {
   const io = require('socket.io')(server);
@@ -182,6 +183,11 @@ module.exports = function (server) {
         let output = { command: 'finished', user_info: user_info, room_info: room_info };
         socket.broadcast.to(room_id).emit('game', output);
         io.sockets.adapter.rooms.get(room_id).finished.push(user_id);
+      } else if (command === 'is_on_game') {
+        let on_game = data.on_game;
+        if (on_game === true){
+          io.sockets.adapter.rooms.get(room_id).failed.push(user_id);
+        }
       }
     });
   });
@@ -221,7 +227,8 @@ function generateRoomCode(rooms) {
 
 function disconnect(io, user_info, room_info) {
   let room_id = room_info.room_id;
-  console.log(`${user_info.user_id}님이 접속을 종료했습니다.`);
+  let user_id = user_info.user_id;
+  console.log(`${user_id}님이 접속을 종료했습니다.`);
 
   if (io.sockets.adapter.rooms.get(room_id)) {
     room_info.joined_player = io.sockets.adapter.rooms.get(room_id).size;
@@ -238,6 +245,7 @@ function disconnect(io, user_info, room_info) {
     if (io.sockets.adapter.rooms.get(room_id) && io.sockets.adapter.rooms.get(room_id).on_game) {
       let output = { command: 'failed', reason: 'disconnect', user_info: user_info, room_info: room_info };
       io.to(room_id).emit('game', output);
+      io.sockets.adapter.rooms.get(room_id).failed.push(user_id);
     }
   }
 }
@@ -291,9 +299,19 @@ function startGame(io, room_id) {
   let time = game_time;
   timer_game = setInterval(() => {
     if (io.sockets.adapter.rooms.get(room_id)) {
-      let output = { command: 'timer', time: time };
-      io.to(room_id).emit('game', output);
+      // 타이머 끝
+      if (time === -1) {
+        endTimer(io, room_id);
+      } 
+      
+      // 타이머 진행중
+      else {
+        let output = { command: 'timer', time: time };
+        io.to(room_id).emit('game', output);
+        time--;
+      }
 
+      // 모두 결과가 들어왔는지 확인
       let finished = io.sockets.adapter.rooms.get(room_id).finished;
       let failed = io.sockets.adapter.rooms.get(room_id).failed;
       let size = finished.length + failed.length;
@@ -302,17 +320,18 @@ function startGame(io, room_id) {
         endGame(io, room_id);
       }
 
-      time--;
-      // 타이머 끝
-      if (time === -1) {
-        endGame(io, room_id);
-      }
     } else {
       // 방이 사라질 경우 타이머 삭제해야함
       console.log(`${room_id}번 방이 사라졌습니다. 게임 타이머를 종료합니다.`);
       clearInterval(timer_game);
     }
   }, 1000);
+}
+
+// 타이머가 다 됐는데도 아직 플레이 중인 사람들을 체크한다
+// 필요한 정보 : room_id
+function endTimer(io, room_id){
+  io.to(room_id).emit('game', {command: 'is_on_game'});
 }
 
 function endGame(io, room_id) {
