@@ -310,17 +310,21 @@ function gameFinished() {
 
 function endGame(data) {
   console.log(data);
-  let output = JSON.stringify(data);
+  
+  // 통과한 사람과 실패한 사람의 리스트
+  let finished = data.finished;
+  let failed = data.failed;
+  
+  // let output = JSON.stringify(data);
+  // let form = document.createElement('form');
+  // let input = document.createElement('input');
+  // input.setAttribute('type', 'hidden');
+  // input.setAttribute('name', 'output');
+  // input.setAttribute('value', output);
 
-  let form = document.createElement('form');
-  let input = document.createElement('input');
-  input.setAttribute('type', 'hidden');
-  input.setAttribute('name', 'output');
-  input.setAttribute('value', output);
-
-  form.appendChild(input);
-  form.setAttribute('method', 'post');
-  form.setAttribute('action', '/result');
-  document.body.appendChild(form);
-  form.submit();
+  // form.appendChild(input);
+  // form.setAttribute('method', 'post');
+  // form.setAttribute('action', '/result');
+  // document.body.appendChild(form);
+  // form.submit();
 }
