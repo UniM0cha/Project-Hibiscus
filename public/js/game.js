@@ -54,6 +54,7 @@ socket.on('room_status', (data) => {
     $('#max_player').text(data.room_info.max_player);
     $('.before_join').hide();
     $('.lobby').show();
+    
   }
 
   // 다른 참여자 방 나감
@@ -65,12 +66,12 @@ socket.on('room_status', (data) => {
 
   // 방 가득 참
   else if (command === 'full') {
-    $('#error_message').show().text('\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0해당 방이 가득 찼습니다!');
+    $('#error_message').show().text('해당 방이 가득 찼습니다!');
   }
 
   // 방 없음
   else if (command === 'no_room') {
-    $('#error_message').show().text('\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0해당 방이 없습니다! 번호를 다시 확인해주세요');
+    $('#error_message').show().text('해당 방이 없습니다! 번호를 다시 확인해주세요');
   }
 
   // 모든 인원 들어옴
@@ -107,7 +108,6 @@ socket.on('game', (data) => {
     $('.start_game').show();
     $('.explain').hide();
     $('.input1').hide();
-    $('.result').show();
 
     startGame(data);
   }
@@ -311,10 +311,17 @@ function gameFinished() {
 function endGame(data) {
   console.log(data);
   
+  
   // 통과한 사람과 실패한 사람의 리스트
   let finished = data.finished;
   let failed = data.failed;
-  
+  $('.result').show();
+  for(let i = 0; i<1; i++) {
+  $('.first111').text(finished[0]);
+  $('.second').text(finished[1]);
+  $('.three').text(finished[2]);
+  }
+
   // let output = JSON.stringify(data);
   // let form = document.createElement('form');
   // let input = document.createElement('input');
