@@ -1,3 +1,7 @@
+@font-face {
+  font-family: SeoulHangang;
+  src: url(./SeoulHangangB.ttf);
+}
 body {
   position: absolute;
   width: 1200px;
